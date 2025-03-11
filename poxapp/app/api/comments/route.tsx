@@ -1,9 +1,8 @@
 import prisma from "@/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     const results = await prisma.comments.findMany();
-
     return NextResponse.json(results, { status: 200 });
 }
 
