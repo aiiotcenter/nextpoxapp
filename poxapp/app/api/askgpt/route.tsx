@@ -28,7 +28,7 @@ async function askChatGPT(__prediction: string, __question: string, absoluteImag
     const prompt = `The prediction is "${prediction}", The image is from ${absoluteImageURL}. ${question}`;
 
     console.log("prompt: ", prompt);
-    
+
     if (!OPENAI_KEY) {
         alert("OPEN AI KEY DOES NOT ESIT");
         return;
@@ -44,7 +44,7 @@ async function askChatGPT(__prediction: string, __question: string, absoluteImag
                     Authorization: `Bearer ${OPENAI_KEY}`,
                 },
                 body: JSON.stringify({
-                    model: "gpt-3.5-turbo",
+                    model: "gpt-4o",
                     messages: [{ role: "user", content: prompt }],
                     max_tokens: 100,
                 }),
