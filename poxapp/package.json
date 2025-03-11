@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@prisma/client": "^6.4.1",
     "busboy": "^1.6.0",
     "formidable": "^3.5.2",
     "next": "15.2.1",
@@ -18,11 +19,13 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/busboy": "^1.5.4",
-    "@types/node": "^20",
+    "@types/node": "^20.17.24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
-    "typescript": "^5"
+    "prisma": "^6.4.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
   }
 }

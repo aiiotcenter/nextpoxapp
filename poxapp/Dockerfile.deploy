@@ -4,11 +4,13 @@ FROM node:18-slim AS build
 # Set working directory
 WORKDIR /app
 
+RUN apt-get update -y && apt-get install -y openssl
+
 # Copy package.json and package-lock.json first to leverage caching
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies, including devDependencies needed for building the app
+RUN npm install 
 
 # Copy the rest of the app source code
 COPY . .
@@ -24,6 +26,12 @@ WORKDIR /app
 
 # Copy only the necessary files from the build stage
 COPY --from=build /app/package.json /app/package-lock.json /app/.next /app/node_modules ./
+
+# Remove unnecessary files to reduce the image size
+RUN rm -rf /app/node_modules/.bin /app/node_modules/*/test /app/node_modules/*/docs /app/node_modules/*/example /app/node_modules/*/scripts /app/node_modules/*/tests /app/node_modules/*/src
+
+# Clean up the package manager cache
+RUN npm prune --production
 
 # Expose port 7134
 EXPOSE 7134

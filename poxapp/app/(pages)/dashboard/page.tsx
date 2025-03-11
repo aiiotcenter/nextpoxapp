@@ -4,16 +4,26 @@ import React, { ChangeEvent, useState } from "react";
 import { Popup, PopupBody, PopupFooter } from "@/app/components/Popup";
 import "@/app/styles/main.css";
 import "@/app/styles/reviewpopup.css";
+import "@/app/styles/changePrediction.css";
 
 import useFileUpload from "@/app/hooks/useFileUpload";
 import Loader from "@/app/components/Loader/Loader";
 
 const DOMAIN = "https://mpoxapp.aiiot.center"; // This is to retrieve the image for GPT
 
+const availableChoices = [
+    "chickenpox",
+    "acne",
+    "monkeypox",
+    "non-skin",
+    "normal",
+    "not-identified",
+];
+
 export default function Dashboard() {
     const [predictionPopup, setPredictionPopup] = useState(false);
     const [reviewPopup, setReviewPopup] = useState(false);
-    const [, setChangePredictionPopup] = useState(false);
+    const [changePredictionPopup, setChangePredictionPopup] = useState(false);
     const [imageURL, setImageURL] = useState<undefined | string>(undefined);
     const [image, setImage] = useState<undefined | File>(undefined);
     const [absoluteImageURL, setAbsoluteImageURL] = useState("");
@@ -24,6 +34,12 @@ export default function Dashboard() {
     const [userQuestion, setUserQuestion] = useState("");
     const [isPredicting, setIsPredicting] = useState(false);
     const [gptResult, setGPTResult] = useState("...");
+
+    const [changingPrediction, setChangingPrediction] = useState(false);
+
+    const [selectedChoice, setSelectedChoice] = useState("");
+    const [userComment, setUserComment] = useState("");
+    const [regularFilename, setRegularFilename] = useState("");
 
     const { uploadFile, isUploading } = useFileUpload();
 
@@ -53,6 +69,48 @@ export default function Dashboard() {
         setGPTResult(returnText);
     }
 
+    // async function getComments() {
+    //     try {
+    //         const result = await fetch("/api/comments", {
+    //             method: "GET",
+    //         });
+
+    //         return JSON.parse(await result.text());
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
+    // }
+
+    async function commentOnImage(
+        comment: string,
+        imagePath: string,
+        classification: string,
+        changedClassification: string
+    ) {
+        try {
+            const result = await fetch("/api/comments", {
+                method: "POST",
+                body: JSON.stringify({
+                    comment,
+                    imagePath,
+                    classification,
+                    changedClassification,
+                }),
+            });
+
+            return JSON.parse(await result.text());
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // useEffect(() => {
+    //     // (async () => {
+    //     //     const results = await getComments();
+    //     //     console.log("results: ", results);
+    //     // })();
+    // }, []);
+
     async function startPrediction() {
         try {
             if (image) {
@@ -72,6 +130,7 @@ export default function Dashboard() {
                     body: JSON.stringify({ fileName }),
                 });
 
+                setRegularFilename(fileName);
                 setAbsoluteImageURL(`${DOMAIN}/uploads/${fileName}`);
 
                 const predictionResults = JSON.parse(
@@ -80,8 +139,12 @@ export default function Dashboard() {
                 console.log("predictionResults: ", predictionResults);
 
                 if (predictionResults) {
+                    const accuracy = predictionResults.max_prob;
                     setPredictedResults({
-                        className: predictionResults.predicted_class,
+                        className:
+                            accuracy < 0.65
+                                ? "not-identified"
+                                : predictionResults.predicted_class,
                         date: new Date().toDateString(),
                     });
                 }
@@ -114,6 +177,42 @@ export default function Dashboard() {
         }
     }
 
+    async function confirmPredictionChanges() {
+        setChangingPrediction(true);
+
+        console.log("changedClassification: ", selectedChoice);
+        console.log("imagePath: ", regularFilename);
+        console.log("comment: ", userComment);
+        console.log("classification: ", predictedResults.className);
+
+        setPredictedResults({ ...predictedResults, className: selectedChoice });
+
+        // save image into correct folder
+
+        const changeResults = await fetch(`api/reference/`, {
+            method: "POST",
+            body: JSON.stringify({
+                fileName: regularFilename,
+                folderName: selectedChoice
+            })
+        });
+
+        console.log("change results: ", await changeResults.text())
+
+        const imageComment = await commentOnImage(
+            userComment,
+            regularFilename,
+            predictedResults.className,
+            selectedChoice
+        );
+
+        console.log("comment result", imageComment);
+
+        //close popup
+        setChangePredictionPopup(false);
+        setChangingPrediction(false);
+    }
+
     return (
         <>
             <div className="predict-button-container">
@@ -134,7 +233,7 @@ export default function Dashboard() {
                         setPredictionPopup(false);
                     }}
                 >
-                    <PopupBody size={{ height: "auto", width: "520px" }}>
+                    <PopupBody size={{ height: "auto", width: "540px" }}>
                         <label
                             htmlFor="image-predict"
                             className="image-upload-wrapper"
@@ -261,6 +360,83 @@ export default function Dashboard() {
                         </div>
 
                         {/* <script src="chatgpt-prediction.js"></script> */}
+                    </PopupBody>
+                </Popup>
+            )}
+
+            {changePredictionPopup && (
+                <Popup
+                    title="Change Prediction"
+                    onClose={() => setChangePredictionPopup(false)}
+                >
+                    <PopupBody>
+                        <div className="popup-body change-prediction-body">
+                            <div className="current-predition-container">
+                                <p className="mini-title">
+                                    Current Predicition:
+                                </p>
+                                <p className="current-prediction-placeholder">
+                                    {predictedResults.className}
+                                </p>
+                            </div>
+
+                            <div className="change-to-container">
+                                <p className="mini-title">Change to:</p>
+                                <div className="change-to-options">
+                                    {availableChoices
+                                        .filter(
+                                            (option) =>
+                                                option !=
+                                                predictedResults.className
+                                        )
+                                        .map((choice, index) => (
+                                            <label
+                                                key={index}
+                                                className="change-option"
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="radio"
+                                                    required
+                                                    onChange={() =>
+                                                        setSelectedChoice(
+                                                            choice
+                                                        )
+                                                    }
+                                                />
+                                                {choice}
+                                            </label>
+                                        ))}
+                                </div>
+                            </div>
+
+                            <div className="comment-container">
+                                <p className="mini-title">
+                                    Comment (Optional):
+                                </p>
+                                <input
+                                    className="comment"
+                                    onChange={(e) =>
+                                        setUserComment(e.target.value)
+                                    }
+                                />
+                            </div>
+                            <p className="disclaimer">
+                                The prediction value will be changed to the new
+                                choice. The image will be used to improve future
+                                versions of the model.
+                            </p>
+
+                            <button
+                                className="button"
+                                type="button"
+                                onClick={confirmPredictionChanges}
+                            >
+                                Confirm Changes
+                            </button>
+                        </div>
+
+                        {changingPrediction && <Loader />}
                     </PopupBody>
                 </Popup>
             )}

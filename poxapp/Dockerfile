@@ -13,6 +13,8 @@ RUN npm install
 # Copy the rest of the app source code
 COPY . . 
 
+RUN apt-get update -y && apt-get install -y openssl
+
 # Expose port 7134
 EXPOSE 7134
 

@@ -38,14 +38,14 @@
 
 .change-to-options{
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, auto));
+    grid-template-columns: repeat(auto-fill, minmax(150px, auto));
     grid-gap: 20px;
 }
 
 .change-option{
     border: 2px solid gray;
     border-radius: 5px;
-    padding: 5px;
+    padding: 5px 10px;
     text-align: center;
     cursor: pointer;
     text-transform: uppercase;
