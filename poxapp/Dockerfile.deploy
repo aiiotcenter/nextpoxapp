@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 
 RUN apt-get update && apt-get install -y \
     openssl \
-    libssl1.1 \
+    libssl3 \
     && rm -rf /var/lib/apt/lists/*
     
 # Install dependencies, including devDependencies needed for building the app
