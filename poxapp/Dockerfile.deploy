@@ -4,11 +4,14 @@ FROM node:18-slim AS build
 # Set working directory
 WORKDIR /app
 
-RUN apt-get update -y && apt-get install -y openssl
-
 # Copy package.json and package-lock.json first to leverage caching
 COPY package.json package-lock.json ./
 
+RUN apt-get update && apt-get install -y \
+    openssl \
+    libssl1.1 \
+    && rm -rf /var/lib/apt/lists/*
+    
 # Install dependencies, including devDependencies needed for building the app
 RUN npm install 
 
