@@ -1,0 +1,40 @@
+.meter {
+  width: 100%;
+  border: 1.3px solid #ff0000;
+  height: 10px;
+  background: linear-gradient(
+    90deg,
+    #ff9e9e 0%,
+    /* Medium red */ #ff6666 40%,
+    /* Strong red */ #ff3333 60%,
+    /* Severe red */ #ff0000 100% /* Dark severe red */
+  );
+  border-radius: 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  overflow: hidden;
+  counter-reset: meter-counter;
+}
+
+.level {
+  border-right: 1.6px solid #fff;
+  counter-increment: meter-counter;
+  position: relative;
+}
+
+.level.inactive {
+  background: white;
+}
+
+.level:last-child {
+  border-right: none;
+}
+
+
+
+.stages-container {
+    display: none;
+    grid-template-columns: auto 1fr;
+    grid-gap: 20px;
+    align-items: center;
+}

@@ -1,0 +1,25 @@
+.loader-view {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    --sk-color: var(--accent);
+    --sk-size: 50px;
+    background: var(--light-accent);
+    z-index: 10;
+    display: grid;
+    place-items: center;
+
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(1.5px);
+    -webkit-backdrop-filter: blur(1px);
+}
+.loader-view > * {
+    display: grid;
+    place-items: center;
+    grid-gap: 40px;
+}
+
+.loader-view p {
+    color: var(--accent);
+}

@@ -1,0 +1,134 @@
+.split-view-container {
+    height: 100vh;
+    width: 100vw;
+    display: grid;
+    /* grid-template-columns: 1fr auto; */
+    position: relative;
+    /* border: 1px solid red; */
+    box-sizing: border-box;
+}
+
+.background-view {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    z-index: 0;
+    /* border: 1px solid blue; */
+}
+
+.background-view::after {
+    content: "";
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    z-index: 10 !important;
+    top: 0px;
+    left: 0px;
+    background-color: var(--accent);
+    opacity: 0.2;
+}
+
+.background-view img {
+    width: 100%;
+    height: 100%;
+}
+
+.login-container {
+    background-color: white;
+    padding: 30px;
+    display: grid;
+    grid-gap: 20px;
+    align-items: start;
+    justify-self: end;
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0.2);
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(9.5px);
+    -webkit-backdrop-filter: blur(9.5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.logo-container {
+    height: auto;
+    display: grid;
+    grid-gap: 20px;
+}
+
+.logo-container img {
+    height: 50px;
+}
+
+.input-element {
+    border: 3px solid white;
+    border-radius: 2px;
+    background: transparent;
+    border-radius: 5px;
+}
+
+.input-element input {
+    height: 100%;
+    width: 100%;
+    outline: none;
+    padding: 13px;
+    font-size: 16px;
+    font-weight: 600;
+    background: transparent;
+    color: white;
+}
+
+.input-element input::placeholder {
+    color: white;
+}
+
+.login-form {
+    display: grid;
+    grid-gap: 20px;
+    position: relative;
+    width: 100%;
+}
+
+button {
+    outline: none;
+    border: none;
+    padding: 1.3em 2.6em;
+    border-radius: 5px;
+    justify-self: start;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+@media screen and (max-width: 500px) {
+    .login-container {
+        width: 100vw;
+    }
+
+    .logo-container img {
+        height: 40px;
+    }
+
+    .input-element input {
+        padding: 9px;
+    }
+
+    button {
+        padding: 1em 2em;
+    }
+}
+
+.bubble-message-container {
+    color: white;
+    font-weight: 200;
+    place-self: center;
+    font-size: 1.3em;
+    opacity: 0%;
+    transition: 0.3s;
+}
+
+.login-heading {
+    color: white;
+}

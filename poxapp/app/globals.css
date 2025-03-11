@@ -1,0 +1,192 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+
+*,
+*::before,
+*::after {
+    padding: 0 0;
+    margin: 0 0;
+    font-family: "Inter", sans-serif;
+    box-sizing: border-box;
+    letter-spacing: 0.2px;
+    font-weight: 200;
+}
+
+:root {
+    --count: calc(100vw / 1vw);
+    --green: #75c46b;
+    --accent: #780000;
+
+    --light-gray: #6f7081;
+    --border-shade: #6f203620;
+    --border-fade: #6f708180;
+    --boxshadowD: rgba(0, 0, 0, 0.08) 0px 4px 12px;
+}
+
+highlight {
+    background: #2e234940;
+    margin: 0px 5px;
+    padding: 3px 13px;
+    font-size: calc(1em - 1px);
+    border-radius: 10px;
+    cursor: default;
+}
+
+.simple-grid {
+    display: grid;
+    grid-gap: 10px;
+    align-items: start;
+}
+
+.stand-out {
+    font-weight: 600;
+    font-size: 1.3em;
+}
+
+.subheading {
+    position: relative;
+    justify-self: start;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    font-size: 0.7em;
+}
+
+.stretch-container {
+    width: 100%;
+    display: grid;
+    align-items: start;
+    /* border: 1px solid var(--accent); */
+    /* padding: 3px; */
+}
+
+.stretchxy-container {
+    width: 100%;
+    height: 100%;
+}
+
+.min-max-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    height: 100%;
+    grid-template-rows: auto 1fr;
+    grid-gap: 20px;
+}
+
+.tag {
+    padding: 7px calc(7px * 1.3);
+    background-color: var(--accent);
+    color: white;
+    font-size: 0.6em;
+    font-weight: 600;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.popup .button {
+    padding: 13px 26px;
+    width: unset;
+    color: white;
+    background: var(--accent);
+    border-radius: 5px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: 0.8em;
+    transition: 0.3s;
+    border: none;
+    height: unset;
+}
+.tag:hover,
+.popup .button:hover {
+    transform: scale(0.97);
+}
+
+.popup .button.disabled,
+.popup button[disabled] {
+    background-color: var(--light-gray);
+    color: var(--medium-gray);
+    cursor: not-allowed;
+}
+.popup button[disabled]:hover {
+    transform: scale(1);
+}
+
+body {
+    overflow: hidden;
+    display: grid;
+    height: 100vh;
+    width: 100vw;
+    background: #edf2f5;
+}
+
+.header {
+    height: auto;
+    width: 100vw;
+    display: grid;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    grid-template-columns: 1fr auto;
+    padding: 20px;
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0.2);
+    /* box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); */
+    backdrop-filter: blur(9.5px);
+    -webkit-backdrop-filter: blur(9.5px);
+}
+
+.header img {
+    height: 35px;
+}
+
+.header .right-side {
+    display: grid;
+    grid-gap: 20px;
+}
+
+.header .right-side img:nth-child(2) {
+    height: 30px;
+    margin-left: 3px;
+}
+
+.arrow-link {
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: 1fr auto;
+    justify-items: start;
+    justify-self: start;
+}
+
+.arrow-link a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.arrow-link > * {
+    position: relative;
+}
+
+.arrow-link:hover > *::before {
+    width: 80%;
+    left: 10%;
+    top: calc(100% + 3px);
+    transition: 0.3s all;
+    /* height: 2px; */
+}
+
+.subheading::before,
+.arrow-link > *::before {
+    content: "";
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 0%;
+    height: 1px;
+    background: var(--accent);
+    width: 100%;
+    border-radius: 3px;
+    transition: 0.3s all;
+    justify-self: center;
+}

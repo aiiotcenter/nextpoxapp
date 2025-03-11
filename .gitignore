@@ -1,0 +1,6 @@
+uploads/*.jpg
+uploads/*.png
+uploads/*.jpeg
+uploads/*.webp
+
+models/*.keras

@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+    # FastAPI backend service
+    backend:
+        build:
+            context: ./api
+            dockerfile: Dockerfile
+        volumes:
+            - ./uploads:/app/uploads # Mount uploads volume
+            - ./models:/app/models # Mount models volume
+        ports:
+            - "7135:7135" # Expose FastAPI app on port 7135
+        environment:
+            - PYTHONUNBUFFERED=1 # To prevent Python output buffering (useful for logging)
+        networks:
+            - app-network
+
+    # Next.js frontend service
+    frontend:
+        build:
+            context: ./poxapp
+            dockerfile: Dockerfile
+        volumes:
+            - ./poxapp:/app # Mount frontend directory
+            - ./uploads:/app/uploads # Mount uploads to access images (if necessary)
+        ports:
+            - "7134:7134" # Expose Next.js frontend on port 3000
+        working_dir: /app
+        command: ["npm", "run", "dev"]
+        networks:
+            - app-network
+
+volumes:
+    uploads:
+        driver: local
+    models:
+        driver: local
+
+# Network for the services to communicate
+networks:
+    app-network:
+        driver: bridge

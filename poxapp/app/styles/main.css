@@ -1,0 +1,440 @@
+body {
+    display: grid;
+}
+
+.box {
+    position: absolute;
+    top: 200px;
+    left: 40px;
+    z-index: 0;
+}
+
+.menu {
+    display: grid;
+    background: white;
+    width: 80px;
+    height: 100%;
+    transition: 0.3s all;
+    box-shadow: 0px 0px 0.5px var(--light-gray);
+    grid-gap: 20px;
+    align-items: start;
+    padding: 30px 10px;
+    grid-template-rows: auto auto auto auto auto auto 1fr;
+    position: absolute;
+    height: 94vh;
+    top: 3vh;
+
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0);
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(9.5px);
+    -webkit-backdrop-filter: blur(9.5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 1;
+}
+
+.menu > * {
+    width: 100%;
+}
+
+.neu-logo {
+    display: grid;
+    place-items: center;
+}
+
+.neu-logo img {
+    width: 40px;
+}
+
+.menu:hover {
+    width: 300px;
+    padding: 30px 30px;
+}
+
+.navigation-item {
+    font-weight: 500;
+    background: #fafcfc;
+    box-shadow: 0px 0px 1px var(--light-gray);
+    border-radius: 10px;
+    width: 50px;
+    height: 50px;
+    overflow: hidden;
+    transition: 0.3s all;
+    position: relative;
+    justify-self: center;
+    color: var(--light-gray);
+    cursor: pointer;
+    font-size: 0.9em;
+}
+.navigation-item:hover {
+    transition: 0s all;
+    background: var(--accent);
+    color: white;
+}
+
+.navigation-item > .image {
+    display: grid;
+    height: 100%;
+    width: 50px;
+    place-items: center;
+    left: 0%;
+}
+
+.navigation-item > .image img {
+    height: 21px;
+    filter: invert(14%) sepia(52%) saturate(597%) hue-rotate(216deg)
+        brightness(96%) contrast(99%);
+}
+.navigation-item:hover > .image img {
+    filter: invert(100%);
+}
+
+.navigation-item > .text {
+    position: absolute;
+    left: 100%;
+    opacity: 0;
+    width: 200%;
+    height: 100%;
+    top: 0px;
+    display: grid;
+    align-content: center;
+    justify-content: start;
+    transition: 0.3s all;
+    color: inherit;
+    /* border: 1px solid red; */
+}
+
+.menu:hover .navigation-item {
+    width: 100%;
+}
+
+.menu:hover .navigation-item > .text {
+    opacity: 1;
+    left: 45px;
+}
+
+.main-container {
+    /* border: 1px solid red; */
+    position: absolute;
+    left: 80px;
+    height: 100vh;
+    width: calc(100vw - 80px);
+    overflow: auto;
+    padding: 30px;
+    display: grid;
+    align-items: start;
+    grid-template-rows: auto auto auto auto 1fr;
+    grid-gap: 50px;
+    padding-top: 200px;
+}
+
+.main-container.predict-main-container {
+    grid-template-rows: auto 1fr;
+}
+
+.main-container.normal-margin {
+    padding-top: 150px;
+}
+
+.predict-button-container {
+    /* box-shadow: 0px 0px 1px var(--light-gray); */
+    border: 1.3px dashed var(--light-gray);
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    position: relative;
+    height: 100px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 600px;
+    transition: 0.3s all;
+    justify-self: center;
+}
+
+.predict-button-container:hover {
+    transform: scale(1.07);
+}
+
+.predict-button-container:hover .button {
+    height: 100%;
+    width: 100%;
+}
+
+.button {
+    height: 50px;
+    width: 290px;
+    background: var(--accent);
+    color: white;
+    border-radius: 5px;
+    display: grid;
+    place-content: center;
+    transition: 0.3s all;
+}
+
+.mini-section-header {
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    width: 100%;
+    /* border: 1px solid red; */
+}
+
+.mini-section {
+    width: 100%;
+    max-width: 1200px;
+    justify-self: center;
+    display: grid;
+    grid-gap: 20px;
+}
+
+.mini-section h2 {
+    font-weight: 400;
+}
+
+h2 {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.past-predictions-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-gap: 20px;
+}
+
+.predictions-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-gap: 20px;
+}
+
+.prediction-element-container {
+    display: grid;
+    box-shadow: 0px 0px 0.5px var(--light-gray);
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: 1/1;
+    position: relative;
+    cursor: pointer;
+    transition: 0.3s all;
+}
+.prediction-element-container:hover {
+    transform: scale(0.97);
+}
+
+.prediction-element-container img {
+    width: 130%;
+    min-height: 100%;
+}
+
+.prediction-element-container:hover > .prediction-descriptions {
+    bottom: 0%;
+}
+
+.prediction-descriptions {
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(9.5px);
+    -webkit-backdrop-filter: blur(9.5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    padding: 13px;
+    position: absolute;
+    max-height: 100%;
+    width: 100%;
+    left: 0px;
+    bottom: -100%;
+    z-index: 1;
+    transition: 0.3s all;
+    color: var(--accent);
+}
+
+.model-accuracies-container,
+.accuracy-container {
+    margin: 30px;
+    border: 0.5px solid var(--light-gray);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.model-accuracy-wrapper {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    border-bottom: 0.5px solid var(--light-gray);
+    grid-gap: 20px;
+    padding: 20px;
+    cursor: pointer;
+}
+.model-accuracy-wrapper:last-child {
+    border-bottom: none;
+}
+
+.model-accuracy-wrapper:hover {
+    background: var(--accent);
+    color: white;
+}
+
+.model-accuracy {
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+.popup-body.predict-body {
+    grid-template-rows: auto 1fr;
+    padding: 20px 20px 0px 20px;
+    grid-gap: 30px;
+    position: relative;
+    height: 100%;
+}
+
+.chosen-model-wrapper {
+    display: grid;
+    grid-gap: 5px;
+    justify-self: end;
+    justify-items: end;
+    align-self: start;
+}
+
+.select-image {
+    position: relative;
+    padding: 20px;
+    height: 100%;
+    display: grid;
+    place-content: center;
+    color: var(--accent);
+}
+
+.image-upload-wrapper {
+    position: relative;
+    width: 500px;
+    height: 100%;
+    min-height: 300px;
+    /* border: 1px solid red; */
+    overflow: hidden;
+    justify-self: center;
+    border-top-right-radius: 10px;
+    border-top-left-radius: 10px;
+    box-shadow: 0px 0px 0.5px var(--light-gray);
+    cursor: pointer;
+}
+.image-upload-wrapper:hover {
+    box-shadow: 0px 0px 2.5px var(--light-gray);
+}
+
+.image-upload-wrapper img {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.popup.prediction-view-popup {
+    padding: 0px;
+    grid-template-rows: unset;
+    height: unset;
+    min-height: unset;
+}
+
+.prediction-view-body {
+    display: grid;
+    grid-template-columns: auto 400px;
+    padding: 0px;
+    position: relative;
+    grid-gap: 0px;
+    /* border: 1px solid green; */
+}
+
+.image-view-wrapper {
+    display: grid;
+    position: relative;
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+    align-items: center;
+}
+
+.image-view-wrapper img {
+    width: 100%;
+    height: 100%;
+}
+
+.image-view-details-wrapper {
+    padding: 30px;
+    width: 100%;
+    display: grid;
+    grid-gap: 20px;
+}
+
+.image-view-details-wrapper > *:nth-child(2) {
+    margin-top: 40px;
+    display: grid;
+    align-items: start;
+}
+
+.stretchxy-container .predict-button-container {
+    height: 100%;
+    width: 100%;
+    max-width: unset;
+}
+
+.stretchxy-container .predict-button-container:hover {
+    transform: unset;
+}
+
+.stretchxy-container .predict-button-container:hover .button {
+    height: 50px;
+    width: 250px;
+    transform: scale(0.97);
+}
+
+.instructions ol {
+    display: grid;
+    grid-gap: 10px;
+    padding: 20px;
+    line-height: calc(1em + 10px);
+}
+
+@media only screen and (max-width: 900px) {
+    .overlay.prediction-view-overlay {
+        height: unset;
+    }
+
+    .prediction-view-popup {
+        margin: 50px;
+        min-width: unset;
+    }
+
+    .prediction-view-body {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: 200px 1fr;
+        padding: 0px;
+        position: relative;
+        grid-gap: 0px;
+    }
+
+    .image-view-wrapper {
+        height: 100%;
+        width: 100%;
+    }
+
+    .prediction-popup {
+        min-width: unset;
+        width: calc(100% - 100px);
+        min-height: unset;
+    }
+
+    .image-upload-wrapper {
+        width: 100%;
+    }
+
+    .button {
+        width: 200px;
+        font-size: 0.6em;
+    }
+}
