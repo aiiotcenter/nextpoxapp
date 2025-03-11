@@ -9,7 +9,7 @@ import "@/app/styles/changePrediction.css";
 import useFileUpload from "@/app/hooks/useFileUpload";
 import Loader from "@/app/components/Loader/Loader";
 
-const DOMAIN = "https://mpoxapp.aiiot.center"; // This is to retrieve the image for GPT
+const DOMAIN = "http://mpoxapp.aiiot.center"; // This is to retrieve the image for GPT
 
 const availableChoices = [
     "chickenpox",
