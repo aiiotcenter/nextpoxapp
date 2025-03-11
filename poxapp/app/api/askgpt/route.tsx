@@ -25,15 +25,10 @@ async function askChatGPT(__prediction: string, __question: string, absoluteImag
     const OPENAI_KEY = process.env.OPENAI_KEY;
     console.log("OPENAI_KEY: ", OPENAI_KEY);
 
-    let prompt = "";
+    const prompt = `The prediction is "${prediction}", The image is from ${absoluteImageURL}. ${question}`;
 
-    const env = process.env.NODE_ENV;
-    if (env === "development") {
-        prompt = `The prediction is "${prediction}". ${question}`;
-    } else if (env === "production") {
-        prompt = `The prediction is "${prediction}", The image is from ${absoluteImageURL}. ${question}`;
-    }
-
+    console.log("prompt: ", prompt);
+    
     if (!OPENAI_KEY) {
         alert("OPEN AI KEY DOES NOT ESIT");
         return;
