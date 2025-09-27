@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "PORT=7134 next dev --turbopack",
-    "build": "next build",
-    "start": "PORT=7134 next start",
+    "dev": "cross-env PORT=7134 next dev --turbopack",
+    "build": "cross-env next build",
+    "start": "cross-env PORT=7134 next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
     "busboy": "^1.6.0",
+    "cross-env": "^10.0.0",
     "formidable": "^3.5.2",
     "next": "15.2.1",
     "react": "^19.0.0",

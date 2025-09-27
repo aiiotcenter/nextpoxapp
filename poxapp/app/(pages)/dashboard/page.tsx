@@ -5,9 +5,95 @@ import { Popup, PopupBody, PopupFooter } from "@/app/components/Popup";
 import "@/app/styles/main.css";
 import "@/app/styles/reviewpopup.css";
 import "@/app/styles/changePrediction.css";
+import bedBug from "@/app/diseaseImages/bedBug.jpg";
+import headLice from "@/app/diseaseImages/Head-Lice.jpg";
+import Image from "next/image";
 
 import useFileUpload from "@/app/hooks/useFileUpload";
 import Loader from "@/app/components/Loader/Loader";
+
+const diseaseDisplayStyles = `
+.disease-showcase {
+  margin-top: 40px;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-top: 2px solid #dee2e6;
+}
+
+.disease-showcase h3 {
+  text-align: center;
+  color: #495057;
+  margin-bottom: 30px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.disease-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.disease-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-left: 4px solid #6c757d;
+}
+
+.disease-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.disease-card:nth-child(1) { border-left-color: #dc3545; }
+.disease-card:nth-child(2) { border-left-color: #fd7e14; }
+.disease-card:nth-child(3) { border-left-color: #ffc107; }
+.disease-card:nth-child(4) { border-left-color: #28a745; }
+.disease-card:nth-child(5) { border-left-color: #17a2b8; }
+.disease-card:nth-child(6) { border-left-color: #6f42c1; }
+
+.disease-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  background: #f8f9fa;
+}
+
+.disease-content {
+  padding: 20px;
+}
+
+.disease-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .disease-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .disease-showcase {
+    padding: 20px 15px;
+  }
+  
+  .disease-content {
+    padding: 15px;
+  }
+  
+  .disease-image {
+    height: 140px;
+  }
+}
+`;
 
 const DOMAIN = "http://mpoxapp.aiiot.center"; // This is to retrieve the image for GPT
 
@@ -27,42 +113,48 @@ const diseaseSimulationData = {
         precision: 0.95,
         recall: 0.96,
         f1Score: 0.96,
-        description: "Small, red, itchy bumps typically appearing in clusters or lines on exposed skin areas. These bites are commonly found on the face, neck, arms, and hands."
+        description: "Small, red, itchy bumps typically appearing in clusters or lines on exposed skin areas. These bites are commonly found on the face, neck, arms, and hands.",
+        imageUrl: "/assets/bedBug.jpg"
     },
     "Pediculus_humanus_capitis": {
         displayName: "Head Lice",
         precision: 0.94,
         recall: 0.95,
         f1Score: 0.95,
-        description: "Tiny insects that infest the scalp and hair. Signs include intense itching, small red bumps on the scalp, neck, and shoulders, and the presence of lice eggs (nits) attached to hair shafts."
+        description: "Tiny insects that infest the scalp and hair. Signs include intense itching, small red bumps on the scalp, neck, and shoulders, and the presence of lice eggs (nits) attached to hair shafts.",
+        imageUrl: "/assets/Head-Lice.jpg"
     },
     "Culex_sp": {
         displayName: "Mosquito Bites",
         precision: 0.94,
         recall: 0.95,
         f1Score: 0.95,
-        description: "Red, swollen, itchy bumps that appear shortly after mosquito bites. These welts are usually small and round, but can vary in size and may appear in groups."
+        description: "Red, swollen, itchy bumps that appear shortly after mosquito bites. These welts are usually small and round, but can vary in size and may appear in groups.",
+        imageUrl: "/assets/mosquito.jpg"
     },
     "Ixodes_ricinus": {
         displayName: "Tick Bite",
         precision: 0.94,
         recall: 0.96,
         f1Score: 0.95,
-        description: "A tick bite typically appears as a small red bump, similar to a mosquito bite. If infected with Lyme disease, it may develop into a characteristic 'bull's-eye' rash with expanding rings."
+        description: "A tick bite typically appears as a small red bump, similar to a mosquito bite. If infected with Lyme disease, it may develop into a characteristic 'bull's-eye' rash with expanding rings.",
+        imageUrl: "/assets/tick.jpg"
     },
     "Ctenocephalides_felis": {
         displayName: "Flea Bites",
         precision: 0.97,
         recall: 0.94,
         f1Score: 0.95,
-        description: "Small, red, extremely itchy bumps that often appear in clusters or lines, typically on the lower legs and feet. The bites have a distinctive red halo around a central puncture point."
+        description: "Small, red, extremely itchy bumps that often appear in clusters or lines, typically on the lower legs and feet. The bites have a distinctive red halo around a central puncture point.",
+        imageUrl: "/assets/flea.jpg"
     },
     "Aedes": {
         displayName: "Aedes Mosquito Bites",
         precision: 0.96,
         recall: 0.93,
         f1Score: 0.94,
-        description: "Red, swollen bumps that can be quite large and intensely itchy. Aedes mosquitoes are aggressive day-time biters and their bites may cause more severe reactions than common house mosquitoes."
+        description: "Red, swollen bumps that can be quite large and intensely itchy. Aedes mosquitoes are aggressive day-time biters and their bites may cause more severe reactions than common house mosquitoes.",
+        imageUrl: "/assets/aedes.jpg"
     }
 };
 
@@ -401,7 +493,7 @@ export default function Dashboard() {
                                     click here to select or take an image to
                                     predict
                                     {simulationMode && <div style={{ fontSize: "12px", color: "#888", marginTop: "8px" }}>
-                                        (Demo mode: Will simulate realistic disease predictions)
+                                        (Will simulate realistic disease predictions)
                                     </div>}
                                 </div>
                             ) : (
@@ -601,6 +693,30 @@ export default function Dashboard() {
                     </PopupBody>
                 </Popup>
             )}
+
+        {simulationMode && (
+          <div className="disease-showcase">
+            <style jsx>{diseaseDisplayStyles}</style>
+            <h3>Available Disease Classifications</h3>
+            <div className="disease-grid">
+              {Object.entries(diseaseSimulationData).map(([key, disease]) => (
+                <div key={key} className="disease-card">
+                  <img 
+                    src={disease.imageUrl} 
+                    alt={disease.displayName}
+                    className="disease-image"
+                    onError={(e) => {
+                      e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-family='Arial' font-size='14'%3EImage Not Available%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                  <div className="disease-content">
+                    <div className="disease-name">{disease.displayName}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         </>
 
         // <?php include "components/changePrediction.php" ?>
