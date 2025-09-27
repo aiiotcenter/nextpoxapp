@@ -20,6 +20,86 @@ const availableChoices = [
     "not-identified",
 ];
 
+// Simulation data based on the disease classification table
+const diseaseSimulationData = {
+    "Cimex_Lectularius": {
+        displayName: "Bed Bug Bites",
+        precision: 0.95,
+        recall: 0.96,
+        f1Score: 0.96,
+        description: "Small, red, itchy bumps typically appearing in clusters or lines on exposed skin areas. These bites are commonly found on the face, neck, arms, and hands."
+    },
+    "Pediculus_humanus_capitis": {
+        displayName: "Head Lice",
+        precision: 0.94,
+        recall: 0.95,
+        f1Score: 0.95,
+        description: "Tiny insects that infest the scalp and hair. Signs include intense itching, small red bumps on the scalp, neck, and shoulders, and the presence of lice eggs (nits) attached to hair shafts."
+    },
+    "Culex_sp": {
+        displayName: "Mosquito Bites",
+        precision: 0.94,
+        recall: 0.95,
+        f1Score: 0.95,
+        description: "Red, swollen, itchy bumps that appear shortly after mosquito bites. These welts are usually small and round, but can vary in size and may appear in groups."
+    },
+    "Ixodes_ricinus": {
+        displayName: "Tick Bite",
+        precision: 0.94,
+        recall: 0.96,
+        f1Score: 0.95,
+        description: "A tick bite typically appears as a small red bump, similar to a mosquito bite. If infected with Lyme disease, it may develop into a characteristic 'bull's-eye' rash with expanding rings."
+    },
+    "Ctenocephalides_felis": {
+        displayName: "Flea Bites",
+        precision: 0.97,
+        recall: 0.94,
+        f1Score: 0.95,
+        description: "Small, red, extremely itchy bumps that often appear in clusters or lines, typically on the lower legs and feet. The bites have a distinctive red halo around a central puncture point."
+    },
+    "Aedes": {
+        displayName: "Aedes Mosquito Bites",
+        precision: 0.96,
+        recall: 0.93,
+        f1Score: 0.94,
+        description: "Red, swollen bumps that can be quite large and intensely itchy. Aedes mosquitoes are aggressive day-time biters and their bites may cause more severe reactions than common house mosquitoes."
+    }
+};
+
+// Function to simulate disease prediction
+function simulateDiseasePrediction() {
+    const diseases = Object.keys(diseaseSimulationData) as (keyof typeof diseaseSimulationData)[];
+    const randomDisease = diseases[Math.floor(Math.random() * diseases.length)];
+    const diseaseData = diseaseSimulationData[randomDisease];
+    
+    // Simulate some variance in confidence
+    const baseConfidence = diseaseData.precision;
+    const variance = (Math.random() - 0.5) * 0.1; // ±0.05 variance
+    const confidence = Math.max(0.65, Math.min(0.99, baseConfidence + variance));
+    
+    return {
+        predicted_class: randomDisease,
+        max_prob: confidence,
+        displayName: diseaseData.displayName,
+        description: diseaseData.description
+    };
+}
+
+// Function to generate human-friendly explanation
+function generateHumanExplanation(prediction: any) {
+    const { displayName, description, max_prob } = prediction;
+    const confidencePercentage = (max_prob * 100).toFixed(1);
+    
+    const explanations = [
+        `Based on the analysis of your skin image, I've identified this as likely ${displayName} with ${confidencePercentage}% confidence. ${description}`,
+        `The image shows characteristics consistent with ${displayName} (${confidencePercentage}% certainty). ${description}`,
+        `My analysis suggests this appears to be ${displayName} with ${confidencePercentage}% confidence. ${description}`,
+    ];
+    
+    return explanations[Math.floor(Math.random() * explanations.length)] + 
+           "\n\nPlease consult with a healthcare professional for proper diagnosis and treatment recommendations.";
+}
+
 export default function Dashboard() {
     const [predictionPopup, setPredictionPopup] = useState(false);
     const [reviewPopup, setReviewPopup] = useState(false);
@@ -41,6 +121,9 @@ export default function Dashboard() {
     const [userComment, setUserComment] = useState("");
     const [regularFilename, setRegularFilename] = useState("");
 
+    // Add simulation mode state
+    const [simulationMode, setSimulationMode] = useState(true);
+
     const { uploadFile, isUploading } = useFileUpload();
 
     async function handleAskQuestion() {
@@ -50,6 +133,34 @@ export default function Dashboard() {
         if (!prediction || !question) {
             // return new Error("Requirements not satisfied"); //TODO: show toast
             alert("prediction or quesion fields are empty");
+            return;
+        }
+
+        // In simulation mode, generate contextual responses
+        if (simulationMode && prediction !== "...") {
+            const responses = {
+                "what is this": "This appears to be an insect bite or skin irritation. The characteristics visible in the image suggest it could be from common household pests.",
+                "is it serious": "Most insect bites and minor skin conditions are not serious and heal on their own. However, if you experience severe symptoms, spreading redness, or signs of infection, please consult a healthcare provider.",
+                "how to treat": "For most insect bites, you can apply a cold compress to reduce swelling, use anti-itch cream or calamine lotion, and avoid scratching. If symptoms persist or worsen, seek medical advice.",
+                "should i see a doctor": "You should see a doctor if you experience severe allergic reactions, signs of infection (increased redness, warmth, pus), fever, or if the condition doesn't improve within a few days."
+            };
+
+            const lowerQuestion = question.toLowerCase();
+            let response = "I understand your concern about this skin condition. ";
+
+            // Find the most relevant response
+            for (const [key, value] of Object.entries(responses)) {
+                if (lowerQuestion.includes(key.split(' ')[0]) || lowerQuestion.includes(key)) {
+                    response += value;
+                    break;
+                }
+            }
+
+            if (response === "I understand your concern about this skin condition. ") {
+                response += "Based on the image analysis, this appears to be a common skin condition. For specific medical advice, please consult with a healthcare professional who can provide personalized recommendations.";
+            }
+
+            setGPTResult(response);
             return;
         }
 
@@ -114,13 +225,39 @@ export default function Dashboard() {
     async function startPrediction() {
         try {
             if (image) {
-                // upload file, get new filename
+                setIsPredicting(true);
+
+                // In simulation mode, use simulated data
+                if (simulationMode) {
+                    // Simulate processing time
+                    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+
+                    const simulatedPrediction = simulateDiseasePrediction();
+                    const humanExplanation = generateHumanExplanation(simulatedPrediction);
+
+                    setPredictedResults({
+                        className: simulatedPrediction.max_prob < 0.65 
+                            ? "not-identified" 
+                            : simulatedPrediction.displayName,
+                        date: new Date().toDateString(),
+                    });
+
+                    setGPTResult(humanExplanation);
+                    setRegularFilename("simulated_image.jpg");
+                    setAbsoluteImageURL(imageURL || "");
+
+                    setImage(undefined);
+                    setPredictionPopup(false);
+                    setIsPredicting(false);
+                    setReviewPopup(true);
+                    return;
+                }
+
+                // Original prediction logic for non-simulation mode
                 const result = await uploadFile(image);
                 console.log("upload result: ", result);
 
                 const fileName = result.split("/uploads/")[1];
-
-                setIsPredicting(true);
 
                 const prediction = await fetch("/api/predict", {
                     method: "POST",
@@ -158,6 +295,7 @@ export default function Dashboard() {
             }
         } catch (error) {
             console.error(error);
+            setIsPredicting(false);
         }
     }
 
@@ -187,8 +325,15 @@ export default function Dashboard() {
 
         setPredictedResults({ ...predictedResults, className: selectedChoice });
 
-        // save image into correct folder
+        // In simulation mode, just simulate the process
+        if (simulationMode) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setChangePredictionPopup(false);
+            setChangingPrediction(false);
+            return;
+        }
 
+        // save image into correct folder
         const changeResults = await fetch(`api/reference/`, {
             method: "POST",
             body: JSON.stringify({
@@ -216,6 +361,19 @@ export default function Dashboard() {
     return (
         <>
             <div className="predict-button-container">
+                {/* Add simulation toggle */}
+                <div style={{ marginBottom: "10px", textAlign: "center" }}>
+                    <label style={{ fontSize: "14px", color: "#666" }}>
+                        <input
+                            type="checkbox"
+                            checked={simulationMode}
+                            onChange={(e) => setSimulationMode(e.target.checked)}
+                            style={{ marginRight: "8px" }}
+                        />
+                        Simulation Mode
+                    </label>
+                </div>
+                
                 <div
                     className="button"
                     onClick={() => setPredictionPopup(true)}
@@ -242,6 +400,9 @@ export default function Dashboard() {
                                 <div className="select-image">
                                     click here to select or take an image to
                                     predict
+                                    {simulationMode && <div style={{ fontSize: "12px", color: "#888", marginTop: "8px" }}>
+                                        (Demo mode: Will simulate realistic disease predictions)
+                                    </div>}
                                 </div>
                             ) : (
                                 <img
