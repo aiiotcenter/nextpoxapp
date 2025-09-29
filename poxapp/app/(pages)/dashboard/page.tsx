@@ -24,7 +24,7 @@ const diseaseDisplayStyles = `
   text-align: center;
   color: #495057;
   margin-bottom: 30px;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
 }
 
@@ -59,7 +59,7 @@ const diseaseDisplayStyles = `
 
 .disease-image {
   width: 100%;
-  height: 160px;
+  height: 200px;
   object-fit: cover;
   background: #f8f9fa;
 }
@@ -109,47 +109,47 @@ const availableChoices = [
 // Simulation data based on the disease classification table
 const diseaseSimulationData = {
     "Cimex_Lectularius": {
-        displayName: "Bed Bug Bites",
+        displayName: "Cimex Lectularius",
         precision: 0.95,
         recall: 0.96,
         f1Score: 0.96,
         description: "Small, red, itchy bumps typically appearing in clusters or lines on exposed skin areas. These bites are commonly found on the face, neck, arms, and hands.",
-        imageUrl: "/assets/bedBug.jpg"
+        imageUrl: "/assets/cimex.jpg"
     },
     "Pediculus_humanus_capitis": {
-        displayName: "Head Lice",
+        displayName: "Pediculus Humanus Capitis",
         precision: 0.94,
         recall: 0.95,
         f1Score: 0.95,
         description: "Tiny insects that infest the scalp and hair. Signs include intense itching, small red bumps on the scalp, neck, and shoulders, and the presence of lice eggs (nits) attached to hair shafts.",
-        imageUrl: "/assets/Head-Lice.jpg"
+        imageUrl: "/assets/pediculus.jpg"
     },
     "Culex_sp": {
-        displayName: "Mosquito Bites",
+        displayName: "Culex Mosquito",
         precision: 0.94,
         recall: 0.95,
         f1Score: 0.95,
         description: "Red, swollen, itchy bumps that appear shortly after mosquito bites. These welts are usually small and round, but can vary in size and may appear in groups.",
-        imageUrl: "/assets/mosquito.jpg"
+        imageUrl: "/assets/culex.jpg"
     },
     "Ixodes_ricinus": {
-        displayName: "Tick Bite",
+        displayName: "Ixodes Ricinus",
         precision: 0.94,
         recall: 0.96,
         f1Score: 0.95,
         description: "A tick bite typically appears as a small red bump, similar to a mosquito bite. If infected with Lyme disease, it may develop into a characteristic 'bull's-eye' rash with expanding rings.",
-        imageUrl: "/assets/tick.jpg"
+        imageUrl: "/assets/ixodes.jpg"
     },
     "Ctenocephalides_felis": {
-        displayName: "Flea Bites",
+        displayName: "Ctenocephalides Felis",
         precision: 0.97,
         recall: 0.94,
         f1Score: 0.95,
         description: "Small, red, extremely itchy bumps that often appear in clusters or lines, typically on the lower legs and feet. The bites have a distinctive red halo around a central puncture point.",
-        imageUrl: "/assets/flea.jpg"
+        imageUrl: "/assets/felis.jpg"
     },
     "Aedes": {
-        displayName: "Aedes Mosquito Bites",
+        displayName: "Aedes Mosquito",
         precision: 0.96,
         recall: 0.93,
         f1Score: 0.94,
@@ -451,79 +451,35 @@ export default function Dashboard() {
     }
 
     return (
-        <>
-            <div className="predict-button-container">
-                {/* Add simulation toggle */}
-                <div style={{ marginBottom: "10px", textAlign: "center" }}>
-                    <label style={{ fontSize: "14px", color: "#666" }}>
-                        <input
-                            type="checkbox"
-                            checked={simulationMode}
-                            onChange={(e) => setSimulationMode(e.target.checked)}
-                            style={{ marginRight: "8px" }}
-                        />
-                        Simulation Mode
-                    </label>
-                </div>
-                
-                <div
-                    className="button"
-                    onClick={() => setPredictionPopup(true)}
-                >
-                    Perform Skin Disease Prediction
-                </div>
-            </div>
+        <div style={{ padding: "20px" }}>
+            <h1 style={{ textAlign: "center", color: "#780000", fontSize: "40px", fontWeight: 700 }}>
+                FESAT
+            </h1>
+            <h2 style={{ textAlign: "center", color: "#010101", fontSize: "32px", fontWeight: 500, marginBottom: "20px" }}>
+                Vector Identification Application
+            </h2>
 
-            {predictionPopup && (
-                <Popup
-                    title="Predict Skin Disease"
-                    onClose={() => {
-                        setImage(undefined);
-                        setImageURL(undefined);
-                        setPredictionPopup(false);
-                    }}
-                >
-                    <PopupBody size={{ height: "auto", width: "540px" }}>
-                        <label
-                            htmlFor="image-predict"
-                            className="image-upload-wrapper"
-                        >
-                            {imageURL == undefined ? (
-                                <div className="select-image">
-                                    click here to select or take an image to
-                                    predict
-                                    {simulationMode && <div style={{ fontSize: "12px", color: "#888", marginTop: "8px" }}>
-                                        (Will simulate realistic disease predictions)
-                                    </div>}
-                                </div>
-                            ) : (
-                                <img
-                                    src={imageURL}
-                                    className="image-predict-chosen-preview"
-                                    alt=""
+            {simulationMode && (
+                <div className="disease-showcase">
+                    <style jsx>{diseaseDisplayStyles}</style>
+                    <div className="disease-grid">
+                        {Object.entries(diseaseSimulationData).map(([key, disease]) => (
+                            <div key={key} className="disease-card">
+                                <img 
+                                    src={disease.imageUrl} 
+                                    alt={disease.displayName}
+                                    className="disease-image"
+                                    onError={(e) => {
+                                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-family='Arial' font-size='14'%3EImage Not Available%3C/text%3E%3C/svg%3E";
+                                    }}
                                 />
-                            )}
-
-                            <input
-                                style={{ display: "none" }}
-                                type="file"
-                                id="image-predict"
-                                accept="image/*"
-                                onChange={(event) =>
-                                    handlePredictingImageChange(event)
-                                }
-                            />
-                        </label>
-
-                        {isUploading || (isPredicting && <Loader />)}
-                    </PopupBody>
-
-                    <PopupFooter>
-                        <div className="button" onClick={startPrediction}>
-                            start prediction
-                        </div>
-                    </PopupFooter>
-                </Popup>
+                                <div className="disease-content">
+                                    <div className="disease-name">{disease.displayName}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
 
             {reviewPopup && (
@@ -693,32 +649,6 @@ export default function Dashboard() {
                     </PopupBody>
                 </Popup>
             )}
-
-        {simulationMode && (
-          <div className="disease-showcase">
-            <style jsx>{diseaseDisplayStyles}</style>
-            <h3>Available Disease Classifications</h3>
-            <div className="disease-grid">
-              {Object.entries(diseaseSimulationData).map(([key, disease]) => (
-                <div key={key} className="disease-card">
-                  <img 
-                    src={disease.imageUrl} 
-                    alt={disease.displayName}
-                    className="disease-image"
-                    onError={(e) => {
-                      e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-family='Arial' font-size='14'%3EImage Not Available%3C/text%3E%3C/svg%3E";
-                    }}
-                  />
-                  <div className="disease-content">
-                    <div className="disease-name">{disease.displayName}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        </>
-
-        // <?php include "components/changePrediction.php" ?>
+        </div>
     );
 }
