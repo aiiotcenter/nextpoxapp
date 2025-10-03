@@ -4,11 +4,11 @@ services:
       context: ./api
       dockerfile: Dockerfile
     container_name: nextpox-backend
-    eenvironment:
-    - PYTHONUNBUFFERED=1
-    - UPLOAD_DIR=/app/uploads
-    - CUDA_VISIBLE_DEVICES=-1
-    - TF_CPP_MIN_LOG_LEVEL=2
+    environment:
+      - PYTHONUNBUFFERED=1
+      - UPLOAD_DIR=/app/uploads
+      - CUDA_VISIBLE_DEVICES=-1
+      - TF_CPP_MIN_LOG_LEVEL=2
     volumes:
       - ./uploads:/app/uploads
       - ./models:/app/models
