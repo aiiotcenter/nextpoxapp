@@ -1,34 +1,4 @@
-# ---- Frontend build image ----
-FROM node:18-slim AS build
-WORKDIR /app
-
-# System deps (Prisma engines/OpenSSL)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl libssl3 ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
-
-# 1) Install deps from lockfile
-COPY package.json package-lock.json ./
-# We keep dev deps because Next is often a devDependency and needed to build
-RUN npm ci
-
-# 2) Prisma first for better caching
-COPY prisma ./prisma
-ENV DATABASE_URL="mysql://root:fadifadi2025@mysql:3306/skinconditions"
-RUN npx prisma generate
-
-# 3) App source + build
-COPY . .
-ENV NODE_ENV=production
-
-# ⬅️ Skip ESLint during build to avoid failing on warnings/errors
-ENV NEXT_DISABLE_ESLINT=1
-# (optional) disable Next telemetry in CI builds
-ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN npm run build
-
-# ---- Runtime image ----
+# ---- Dev image (no build) ----
 FROM node:18-slim
 WORKDIR /app
 
@@ -36,17 +6,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl libssl3 ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-ENV NODE_ENV=production
-ENV PORT=7134
+# Install deps
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Prisma client
+COPY prisma ./prisma
 ENV DATABASE_URL="mysql://root:fadifadi2025@mysql:3306/skinconditions"
+RUN npx prisma generate
 
-# Copy built app + node_modules
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
-COPY --from=build /app/package.json ./package.json
+# App source
+COPY . .
 
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
 EXPOSE 7134
 
-command: ["npm", "run", "dev", "--", "-p", "7134", "-H", "0.0.0.0"]
+# Dev server
+CMD ["npm", "run", "dev", "--", "-p", "7134", "-H", "0.0.0.0"]
