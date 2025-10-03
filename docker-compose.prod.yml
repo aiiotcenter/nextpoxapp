@@ -35,7 +35,7 @@ services:
       - ./uploads:/app/uploads
     ports:
       - "7134:7134"
-    command: ["npm", "run", "start", "--", "-p", "7134", "-H", "0.0.0.0"]
+    command: ["npm", "run", "dev", "--", "-p", "7134", "-H", "0.0.0.0"]
     restart: unless-stopped
     networks:
       - proxy-net

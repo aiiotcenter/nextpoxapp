@@ -49,5 +49,4 @@ COPY --from=build /app/package.json ./package.json
 
 EXPOSE 7134
 
-# Run production server (not dev)
-CMD ["npm", "run", "start", "--", "-p", "7134", "-H", "0.0.0.0"]
+command: ["npm", "run", "dev", "--", "-p", "7134", "-H", "0.0.0.0"]
