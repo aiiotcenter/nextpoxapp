@@ -1,14 +1,9 @@
 "use client";
-
 import React, { ChangeEvent, useState } from "react";
 import { Popup, PopupBody, PopupFooter } from "@/app/components/Popup";
 import "@/app/styles/main.css";
 import "@/app/styles/reviewpopup.css";
 import "@/app/styles/changePrediction.css";
-import bedBug from "@/app/diseaseImages/bedBug.jpg";
-import headLice from "@/app/diseaseImages/Head-Lice.jpg";
-import Image from "next/image";
-
 import useFileUpload from "@/app/hooks/useFileUpload";
 import Loader from "@/app/components/Loader/Loader";
 

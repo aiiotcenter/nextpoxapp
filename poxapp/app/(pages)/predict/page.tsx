@@ -4,7 +4,7 @@ import React, { ChangeEvent, useState } from "react";
 import { Popup, PopupBody, PopupFooter } from "@/app/components/Popup";
 import "@/app/styles/main.css";
 import "@/app/styles/reviewpopup.css";
-import Image from "next/image";
+
 
 import useFileUpload from "@/app/hooks/useFileUpload";
 import Loader from "@/app/components/Loader/Loader";
