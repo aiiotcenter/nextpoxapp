@@ -72,27 +72,39 @@ class SavedModelWrapper:
 @lru_cache(maxsize=4)
 def get_model(model_path: str):
     """
-    Try Keras load_model first; if it fails with the multi-input Dense error (or anything),
-    fallback to tf.saved_model.load wrapped by SavedModelWrapper.
+    Try Keras load_model with safe_mode toggles; if that fails AND the path is a
+    directory (SavedModel), fallback to tf.saved_model.load wrapped by SavedModelWrapper.
     """
-    # 1) Try Keras
+    # 1) Keras load attempt (normal)
     try:
         model = load_model(model_path, compile=False)
         logger.info(f"Loaded Keras model: {model_path}")
         return model
-    except Exception as e:
-        logger.error(f"Could not load model {model_path} with Keras: {e}")
+    except Exception as e1:
+        logger.error(f"Could not load model {model_path} with Keras: {e1}")
 
-    # 2) Try SavedModel fallback (directory or .keras may still contain a SavedModel)
+    # 2) Keras load attempt with safe_mode=False (Keras 3)
     try:
-        sm = tf.saved_model.load(model_path)
-        logger.info(f"Loaded SavedModel: {model_path}")
-        return SavedModelWrapper(sm)
+        model = load_model(model_path, compile=False, safe_mode=False)  # <-- extra attempt
+        logger.info(f"Loaded Keras model (safe_mode=False): {model_path}")
+        return model
     except Exception as e2:
-        logger.error(f"Could not load SavedModel from {model_path}: {e2}")
-        raise RuntimeError(f"Failed to load model from {model_path}.") from e2
+        logger.error(f"Keras (safe_mode=False) also failed for {model_path}: {e2}")
 
+    # 3) SavedModel fallback ONLY if the path is a directory
+    if os.path.isdir(model_path):
+        try:
+            sm = tf.saved_model.load(model_path)
+            logger.info(f"Loaded SavedModel directory: {model_path}")
+            return SavedModelWrapper(sm)
+        except Exception as e3:
+            logger.error(f"Could not load SavedModel from {model_path}: {e3}")
 
+    # If we reach here, there is no viable way to load this file inside this runtime
+    raise RuntimeError(
+        "Failed to load model. If your model is a .keras file that encodes multiple inputs, "
+        "please re-export a single-input model or export a SavedModel directory."
+    )
 # -------------------- Prediction core --------------------
 def predict_image(model: Any, _image: Image.Image, size: int) -> Dict[str, Any]:
     labels = {0: 'acne', 1: 'chickenpox', 2: 'monkeypox', 3: 'non-skin', 4: 'normal'}
