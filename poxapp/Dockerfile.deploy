@@ -1,28 +1,26 @@
-# Stage 1: Build stage
-FROM node:18-slim AS build
-
-# Set working directory
+# ---- Dev image (no build) ----
+FROM node:18-slim
 WORKDIR /app
 
-# Copy package.json and package-lock.json first to leverage caching
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl libssl3 ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install deps
 COPY package.json package-lock.json ./
+RUN npm ci
 
-# Install dependencies, including devDependencies needed for building the app
-RUN npm install 
+# Prisma client
+COPY prisma ./prisma
+ENV DATABASE_URL="mysql://root:fadifadi2025@mysql:3306/skinconditions"
+RUN npx prisma generate
 
-# Copy the rest of the app source code
+# App source
 COPY . .
 
-# Build the Next.js app (you can change this depending on your build command)
-RUN npm run build
-
-RUN apt-get update && apt-get install -y \
-    openssl \
-    libssl3 \
-    && rm -rf /var/lib/apt/lists/*
-    
-# Expose port 7134
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
 EXPOSE 7134
 
-# Run Next.js in production mode
-CMD ["npm", "run", "start"]
+# Dev server
+CMD ["npm", "run", "dev", "--", "-p", "7134", "-H", "0.0.0.0"]

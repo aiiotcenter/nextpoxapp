@@ -1,26 +1,58 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+# -------- Base image --------
+FROM python:3.11-slim AS base
 
-# Set the working directory in the container
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    CUDA_VISIBLE_DEVICES=-1 \
+    TF_CPP_MIN_LOG_LEVEL=2
+
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app/
+# Runtime libs you may need (jpeg/png/xml/zlib)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libjpeg62-turbo libpng16-16 libxml2 libxslt1.1 zlib1g \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install system dependencies for Python packages and other utilities
-RUN apt-get update && apt-get install -y \
-    libjpeg-dev \
-    libpng-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+# -------- Build stage --------
+FROM base AS build
 
-# Install dependencies from requirements.txt
-RUN pip install -r requirements.txt
+# Build tools for any native deps (if none, you can remove this)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc \
+ && rm -rf /var/lib/apt/lists/*
 
-# Expose the port the app runs on
+# Virtualenv
+ENV VENV_PATH=/opt/venv
+RUN python -m venv $VENV_PATH
+ENV PATH="$VENV_PATH/bin:$PATH"
+
+# Copy requirements first (to leverage cache)
+COPY requirements.txt .
+
+# Use exec-form so /bin/sh isn't required
+RUN ["/opt/venv/bin/python", "-m", "pip", "install", "--upgrade", "pip"]
+RUN ["/opt/venv/bin/python", "-m", "pip", "install", "-r", "requirements.txt"]
+
+# Copy the rest of the app code
+COPY . /app
+
+# -------- Runtime stage --------
+FROM base AS runtime
+
+ENV VENV_PATH=/opt/venv
+COPY --from=build $VENV_PATH $VENV_PATH
+ENV PATH="$VENV_PATH/bin:$PATH"
+
+# Copy app code
+COPY --from=build /app /app
+
+# Non-root
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 7135
 
-# Set the entrypoint to run the FastAPI app using Uvicorn
+# If your FastAPI app is `application = FastAPI()` in fast.py:
 CMD ["uvicorn", "fast:application", "--host", "0.0.0.0", "--port", "7135"]
