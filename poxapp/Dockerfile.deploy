@@ -1,28 +1,47 @@
-# Stage 1: Build stage
+# ---- Frontend build image ----
 FROM node:18-slim AS build
-
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json first to leverage caching
+# System deps (Prisma engines/OpenSSL)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl libssl3 ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# 1) Install deps from lockfile
 COPY package.json package-lock.json ./
+# We keep dev deps because Next is often a devDependency and needed to build
+RUN npm ci
 
-# Install dependencies, including devDependencies needed for building the app
-RUN npm install 
+# 2) Prisma first for better caching
+COPY prisma ./prisma
+ENV DATABASE_URL="mysql://root:fadifadi2025@mysql:3306/skinconditions"
+RUN npx prisma generate
 
-# Copy the rest of the app source code
+# 3) App source + build
 COPY . .
-
-# Build the Next.js app (you can change this depending on your build command)
+ENV NODE_ENV=production
 RUN npm run build
 
-RUN apt-get update && apt-get install -y \
-    openssl \
-    libssl3 \
-    && rm -rf /var/lib/apt/lists/*
-    
-# Expose port 7134
+# ---- Runtime image ----
+FROM node:18-slim
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl libssl3 ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV NODE_ENV=production
+ENV PORT=7134
+ENV DATABASE_URL="mysql://root:fadifadi2025@mysql:3306/skinconditions"
+
+# Copy built app + node_modules
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/public ./public
+COPY --from=build /app/package.json ./package.json
+
 EXPOSE 7134
 
-# Run Next.js in production mode
-CMD ["npm", "run", "start"]
+# Run production server (not dev)
+CMD ["npm", "run", "start", "--", "-p", "7134", "-H", "0.0.0.0"]

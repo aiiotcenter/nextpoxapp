@@ -1,65 +1,64 @@
-version: "3.8"
-
 services:
-    # FastAPI backend service
-    backend:
-        build:
-            context: ./api
-            dockerfile: Dockerfile
-        volumes:
-            - ./uploads:/app/uploads # Mount uploads volume
-            - ./models:/app/models # Mount models volume
-        ports:
-            - "7135:7135" # Expose FastAPI app on port 7135
-        environment:
-            - PYTHONUNBUFFERED=1 # To prevent Python output buffering (useful for logging)
-        networks:
-            - app-network
+  backend:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: nextpox-backend
+    eenvironment:
+    - PYTHONUNBUFFERED=1
+    - UPLOAD_DIR=/app/uploads
+    - CUDA_VISIBLE_DEVICES=-1
+    - TF_CPP_MIN_LOG_LEVEL=2
+    volumes:
+      - ./uploads:/app/uploads
+      - ./models:/app/models
+    ports:
+      - "7135:7135"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    networks:
+      - proxy-net
 
-    # Next.js frontend service
-    frontend:
-        build:
-            context: ./poxapp
-            dockerfile: Dockerfile.deploy
-        environment:
-            - DATABASE_URL=mysql://root:fadifadi2025@mysql:3306/skinconditions
-            - NEXT_PRIVATE_EXPERIMENTAL_TURBOPACK=false # Disable Turbopack
-        depends_on:
-            - mysql
-        volumes:
-            - ./poxapp:/app # Mount frontend directory
-            - ./uploads:/app/uploads # Mount uploads to access images (if necessary)
-        ports:
-            - "7134:7134" # Expose Next.js frontend on port 3000
-        working_dir: /app
-        command: ["npm", "run", "start"]
-        networks:
-            - app-network
+  frontend:
+    build:
+      context: ./poxapp
+      dockerfile: Dockerfile.deploy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://root:fadifadi2025@mysql:3306/skinconditions
+      - PORT=7134
+      - UPLOAD_DIR=/app/uploads
+    depends_on:
+      - mysql
+    volumes:
+      - ./uploads:/app/uploads
+    ports:
+      - "7134:7134"
+    command: ["npm", "run", "start", "--", "-p", "7134", "-H", "0.0.0.0"]
+    restart: unless-stopped
+    networks:
+      - proxy-net
 
-    # MySQL service
-    mysql:
-        image: mysql:8.0 # Use official MySQL image, version 8.0
-        environment:
-            MYSQL_ROOT_PASSWORD: fadifadi2025 # Replace with a secure password
-            MYSQL_DATABASE: skinconditions # Default database name (optional)
-            MYSQL_USER: dux # Optional: create a custom MySQL user
-            MYSQL_PASSWORD: dux123 # Optional: password for custom user
-        ports:
-            - "7136:3306" # Map MySQL port 3306 to 7136
-        volumes:
-            - mysql-data:/var/lib/mysql # Persist MySQL data
-        networks:
-            - app-network
+  mysql:
+    image: mysql:8.0
+    container_name: nextpox-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: fadifadi2025
+      MYSQL_DATABASE: skinconditions
+      MYSQL_USER: dux
+      MYSQL_PASSWORD: dux123
+    ports:
+      - "7136:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - proxy-net
 
 volumes:
-    uploads:
-        driver: local
-    models:
-        driver: local
-    mysql-data:
-        driver: local
+  mysql-data:
 
-# Network for the services to communicate
 networks:
-    app-network:
-        driver: bridge
+  proxy-net:
+    external: true
