@@ -1,61 +1,58 @@
-# ---- Frontend build image ----
-FROM node:18-slim AS build
+# -------- Base image --------
+FROM python:3.11-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    CUDA_VISIBLE_DEVICES=-1 \
+    TF_CPP_MIN_LOG_LEVEL=2
+
 WORKDIR /app
 
-# System deps (Prisma engines/OpenSSL)
+# Runtime libs you may need (jpeg/png/xml/zlib)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl libssl3 ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
+    libjpeg62-turbo libpng16-16 libxml2 libxslt1.1 zlib1g \
+ && rm -rf /var/lib/apt/lists/*
 
-# 1) Install deps from lockfile (reproducible builds)
-COPY package.json package-lock.json ./
-# Dev deps are needed to build Next.js
-RUN npm ci
+# -------- Build stage --------
+FROM base AS build
 
-# 2) Copy ONLY prisma first, so generate can cache
-COPY prisma ./prisma
-
-# Provide a DATABASE_URL for prisma generate at build-time (dummy is fine if schema doesn't introspect DB)
-ENV DATABASE_URL="mysql://root:fadifadi2025@mysql:3306/skinconditions"
-
-# 3) Generate Prisma Client
-RUN npx prisma generate
-
-# 4) Copy the rest and build
-COPY . .
-ENV NODE_ENV=production
-RUN npm run build
-
-# After build, prune dev deps so runtime is lighter
-RUN npm prune --omit=dev
-
-
-# ---- Runtime image ----
-FROM node:18-slim
-WORKDIR /app
-
-# Runtime system deps for Prisma
+# Build tools for any native deps (if none, you can remove this)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl libssl3 ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
+    build-essential gcc \
+ && rm -rf /var/lib/apt/lists/*
 
-ENV NODE_ENV=production
-ENV PORT=7134
-ENV DATABASE_URL="mysql://root:fadifadi2025@mysql:3306/skinconditions"
+# Virtualenv
+ENV VENV_PATH=/opt/venv
+RUN python -m venv $VENV_PATH
+ENV PATH="$VENV_PATH/bin:$PATH"
 
-# Copy production node_modules (already pruned), prisma, build output, public assets, and pkg metadata
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
-COPY --from=build /app/package.json ./package.json
+# Copy requirements first (to leverage cache)
+COPY requirements.txt .
 
-# (Optional) If you use Next standalone output, also copy:
-# COPY --from=build /app/.next/standalone ./
-# COPY --from=build /app/.next/static ./.next/static
-# and then start with: CMD ["node", "server.js"]
+# Use exec-form so /bin/sh isn't required
+RUN ["/opt/venv/bin/python", "-m", "pip", "install", "--upgrade", "pip"]
+RUN ["/opt/venv/bin/python", "-m", "pip", "install", "-r", "requirements.txt"]
 
-EXPOSE 7134
+# Copy the rest of the app code
+COPY . /app
 
-# Ensure Next binds on all interfaces in the container
-CMD ["npm", "run", "start", "--", "-p", "7134", "-H", "0.0.0.0"]
+# -------- Runtime stage --------
+FROM base AS runtime
+
+ENV VENV_PATH=/opt/venv
+COPY --from=build $VENV_PATH $VENV_PATH
+ENV PATH="$VENV_PATH/bin:$PATH"
+
+# Copy app code
+COPY --from=build /app /app
+
+# Non-root
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 7135
+
+# If your FastAPI app is `application = FastAPI()` in fast.py:
+CMD ["uvicorn", "fast:application", "--host", "0.0.0.0", "--port", "7135"]
