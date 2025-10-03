@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   backend:
     build:
@@ -19,24 +21,25 @@ services:
     restart: unless-stopped
     networks:
       - proxy-net
-frontend:
-  build:
-    context: ./poxapp
-    dockerfile: Dockerfile.deploy
-  environment:
-    - NODE_ENV=production
-    - DATABASE_URL=mysql://root:fadifadi2025@mysql:3306/skinconditions
-    - PORT=7134
-    - UPLOAD_DIR=/app/uploads
-  depends_on:
-    - mysql
-  volumes:
-    - ./uploads:/app/uploads
-  ports:
-    - "7134:7134"
-  command: ["npm", "run", "build-and-start"]
-  restart: unless-stopped
-  networks:
+
+  frontend:
+    build:
+      context: ./poxapp
+      dockerfile: Dockerfile.deploy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://root:fadifadi2025@mysql:3306/skinconditions
+      - PORT=7134
+      - UPLOAD_DIR=/app/uploads
+    depends_on:
+      - mysql
+    volumes:
+      - ./uploads:/app/uploads
+    ports:
+      - "7134:7134"
+    command: ["sh", "-c", "npm run build && npm run start -- -p 7134 -H 0.0.0.0"]
+    restart: unless-stopped
+    networks:
       - proxy-net
 
   mysql:
