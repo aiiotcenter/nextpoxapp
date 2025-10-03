@@ -1,9 +1,10 @@
-# ---- Dev image (no build) ----
+# ---- Dev image ----
 FROM node:18-slim
 WORKDIR /app
 
+# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl libssl3 ca-certificates \
+    openssl libssl3 ca-certificates libc6 libgcc-s1 libstdc++6 \
   && rm -rf /var/lib/apt/lists/*
 
 # Install deps
@@ -18,9 +19,12 @@ RUN npx prisma generate
 # App source
 COPY . .
 
+# Dev environment
 ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 EXPOSE 7134
 
-# Dev server
+# Run dev server
 CMD ["npm", "run", "dev", "--", "-p", "7134", "-H", "0.0.0.0"]
