@@ -28,16 +28,18 @@ services:
       dockerfile: Dockerfile.deploy
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=mysql://root:fadifadi2025@mysql:3306/skinconditions
+      - DATABASE_URL=mysql://dux:dux123@mysql:3306/skinconditions   # <-- use app user
       - PORT=7134
       - UPLOAD_DIR=/app/uploads
+      # - OPENAI_KEY=${OPENAI_KEY}   # (optional) if your app needs it
     depends_on:
       - mysql
     volumes:
       - ./uploads:/app/uploads
     ports:
       - "7134:7134"
-    command: ["sh", "-c", "npm run build && npm run start -- -p 7134 -H 0.0.0.0"]
+    # run migrations (or use `db push` if you don't have migrations yet)
+    command: ["sh", "-c", "npx prisma migrate deploy || npx prisma db push; npm run build && npm run start -- -p 7134 -H 0.0.0.0"]
     restart: unless-stopped
     networks:
       - proxy-net
