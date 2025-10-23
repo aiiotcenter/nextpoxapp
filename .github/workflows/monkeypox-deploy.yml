@@ -99,9 +99,30 @@ jobs:
           fi
           tailscale ssh "$TARGET" <<'REMOTE_CMD'
           set -euo pipefail
-          cd mpox
-          docker compose pull
-          docker compose down
-          docker compose up -d
+
+          APP_DIR=""
+          for candidate in nextpoxapp mpox; do
+              if [ -d "$candidate" ]; then
+                  APP_DIR="$candidate"
+                  break
+              fi
+          done
+
+          if [ -z "$APP_DIR" ]; then
+              echo "Unable to locate application directory (nextpoxapp or mpox)." >&2
+              exit 1
+          fi
+
+          cd "$APP_DIR"
+
+          COMPOSE_FILE="docker-compose.prod.yml"
+          if [ ! -f "$COMPOSE_FILE" ]; then
+              echo "Compose file '$COMPOSE_FILE' not found in $(pwd)." >&2
+              exit 1
+          fi
+
+          docker compose -f "$COMPOSE_FILE" pull
+          docker compose -f "$COMPOSE_FILE" down
+          docker compose -f "$COMPOSE_FILE" up -d
           docker restart nginx-gateway
           REMOTE_CMD
