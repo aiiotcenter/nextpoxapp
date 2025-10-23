@@ -115,7 +115,7 @@ jobs:
 
           cd "$APP_DIR"
 
-          COMPOSE_FILE="docker-compose.prod.yml"
+          COMPOSE_FILE="docker-compose.yml"
           if [ ! -f "$COMPOSE_FILE" ]; then
               echo "Compose file '$COMPOSE_FILE' not found in $(pwd)." >&2
               exit 1
