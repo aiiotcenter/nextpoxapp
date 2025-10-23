@@ -99,7 +99,7 @@ jobs:
           fi
           tailscale ssh "$TARGET" <<'REMOTE_CMD'
           set -euo pipefail
-          cd beesweb
+          cd mpox
           docker compose pull
           docker compose down
           docker compose up -d
