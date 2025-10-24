@@ -2,9 +2,7 @@
     height: 100vh;
     width: 100vw;
     display: grid;
-    /* grid-template-columns: 1fr auto; */
     position: relative;
-    /* border: 1px solid red; */
     box-sizing: border-box;
 }
 
@@ -14,7 +12,6 @@
     width: 100%;
     overflow: hidden;
     z-index: 0;
-    /* border: 1px solid blue; */
 }
 
 .background-view::after {
@@ -22,7 +19,7 @@
     height: 100%;
     width: 100%;
     position: absolute;
-    z-index: 10 !important;
+    z-index: 10;
     top: 0px;
     left: 0px;
     background-color: var(--accent);
@@ -32,55 +29,68 @@
 .background-view img {
     width: 100%;
     height: 100%;
+    object-fit: cover;
 }
 
 .login-container {
     background-color: white;
-    padding: 30px;
+    padding: 40px;
     display: grid;
-    grid-gap: 20px;
+    grid-gap: 30px;
     align-items: start;
-    justify-self: end;
-    /* From https://css.glass */
-    background: rgba(255, 255, 255, 0.2);
-    border-top-right-radius: 16px;
-    border-bottom-right-radius: 16px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(9.5px);
-    -webkit-backdrop-filter: blur(9.5px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    justify-self: center;
+    align-self: center;
+    max-width: 450px;
+    width: 100%;
+    z-index: 100;
+    
+    /* Glassmorphism effect */
+    background: rgba(6, 117, 253, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .logo-container {
     height: auto;
-    display: grid;
-    grid-gap: 20px;
+    display: flex;
+    grid-gap: 8px;
+    justify-items: center;
 }
 
 .logo-container img {
-    height: 50px;
+    height: 32px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .input-element {
-    border: 3px solid white;
-    border-radius: 2px;
-    background: transparent;
-    border-radius: 5px;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    transition: 0.3s all;
+}
+
+.input-element:focus-within {
+    border-color: white;
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .input-element input {
     height: 100%;
     width: 100%;
     outline: none;
-    padding: 13px;
+    padding: 15px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
     background: transparent;
     color: white;
+    border: none;
 }
 
 .input-element input::placeholder {
-    color: white;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .login-form {
@@ -90,45 +100,135 @@
     width: 100%;
 }
 
+.login-heading {
+    color: #780000;
+    font-weight: 700;
+    font-size: 2.5em;
+    text-align: center;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.login-subheading {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 400;
+    font-size: 1.1em;
+    text-align: center;
+    margin-top: -15px;
+    margin-bottom: 10px;
+}
+
 button {
     outline: none;
     border: none;
-    padding: 1.3em 2.6em;
-    border-radius: 5px;
-    justify-self: start;
+    padding: 15px 30px;
+    border-radius: 8px;
+    justify-self: stretch;
     background: var(--accent);
     color: white;
     cursor: pointer;
     font-size: 16px;
+    font-weight: 600;
+    transition: 0.3s all;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    background: #5a0000;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.bubble-message-container {
+    color: white;
+    font-weight: 400;
+    place-self: center;
+    font-size: 0.9em;
+    opacity: 0;
+    transition: 0.3s all;
+    background: rgba(220, 38, 38, 0.9);
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.bubble-message-container.visible {
+    opacity: 1;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1024px) {
+    .login-container {
+        max-width: 400px;
+        padding: 35px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .login-container {
+        justify-self: center;
+        max-width: 90%;
+        border-radius: 16px;
+        padding: 30px;
+    }
+
+    .logo-container img {
+        height: 45px;
+    }
+
+    .login-heading {
+        font-size: 2em;
+    }
+
+    .login-subheading {
+        font-size: 1em;
+    }
 }
 
 @media screen and (max-width: 500px) {
     .login-container {
-        width: 100vw;
+        width: 95%;
+        padding: 25px;
+        grid-gap: 20px;
+    }
+
+    .logo-container {
+        grid-gap: 15px;
     }
 
     .logo-container img {
         height: 40px;
     }
 
+    .input-element {
+        border-width: 2px;
+    }
+
     .input-element input {
-        padding: 9px;
+        padding: 12px;
+        font-size: 14px;
     }
 
     button {
-        padding: 1em 2em;
+        padding: 12px 24px;
+        font-size: 14px;
     }
-}
 
-.bubble-message-container {
-    color: white;
-    font-weight: 200;
-    place-self: center;
-    font-size: 1.3em;
-    opacity: 0%;
-    transition: 0.3s;
-}
+    .login-heading {
+        font-size: 1.8em;
+    }
 
-.login-heading {
-    color: white;
+    .login-subheading {
+        font-size: 0.9em;
+    }
+
+    .bubble-message-container {
+        font-size: 0.85em;
+        padding: 8px 16px;
+    }
 }

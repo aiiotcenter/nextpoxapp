@@ -1,187 +1,397 @@
 "use client";
-
-import { useState } from "react";
+import React, { ChangeEvent, useState } from "react";
+import { Popup, PopupBody } from "@/app/components/Popup";
 import "@/app/styles/main.css";
 import "@/app/styles/reviewpopup.css";
 import "@/app/styles/changePrediction.css";
-import Image from "next/image";
+import useFileUpload from "@/app/hooks/useFileUpload";
+import Loader from "@/app/components/Loader/Loader";
 
-interface PredictionResult {
-  success: boolean;
-  predicted_class: string;
-  confidence: number;
-  class_index: number;
-  all_probabilities: Record<string, number>;
+const DOMAIN = "http://mpoxapp.aiiot.center";
+
+const availableChoices = [
+    "Cimex_Lectularius",
+    "Pediculus_humanus_capitis",
+    "Culex_sp",
+    "Ixodes_ricinus",
+    "Ctenocephalides_felis",
+    "Aedes",
+];
+
+const vectorData = {
+    "Cimex_Lectularius": {
+        displayName: "Cimex Lectularius",
+        description: "Common bed bugs are small, reddish-brown insects that feed on human blood.",
+        precision: 0.95
+    },
+    "Pediculus_humanus_capitis": {
+        displayName: "Pediculus Humanus Capitis",
+        description: "Head lice are tiny parasitic insects that live on the scalp.",
+        precision: 0.94
+    },
+    "Culex_sp": {
+        displayName: "Culex Mosquito",
+        description: "Culex mosquitoes are common vectors for diseases like West Nile virus.",
+        precision: 0.94
+    },
+    "Ixodes_ricinus": {
+        displayName: "Ixodes Ricinus",
+        description: "Deer ticks are known vectors for Lyme disease.",
+        precision: 0.94
+    },
+    "Ctenocephalides_felis": {
+        displayName: "Ctenocephalides Felis",
+        description: "Cat fleas are the most common flea species.",
+        precision: 0.97
+    },
+    "Aedes": {
+        displayName: "Aedes Mosquito",
+        description: "Aedes mosquitoes transmit dengue, Zika, and chikungunya viruses.",
+        precision: 0.96
+    }
+};
+
+function simulateVectorPrediction() {
+    const vectors = Object.keys(vectorData) as (keyof typeof vectorData)[];
+    const randomVector = vectors[Math.floor(Math.random() * vectors.length)];
+    const vectorInfo = vectorData[randomVector];
+    
+    const baseConfidence = vectorInfo.precision;
+    const variance = (Math.random() - 0.5) * 0.1;
+    const confidence = Math.max(0.65, Math.min(0.99, baseConfidence + variance));
+    
+    return {
+        predicted_class: randomVector,
+        max_prob: confidence,
+        displayName: vectorInfo.displayName,
+        description: vectorInfo.description
+    };
 }
 
-export default function ParasiteClassifier() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function generateExplanation(prediction: any) {
+    const { displayName, description, max_prob } = prediction;
+    const confidencePercentage = (max_prob * 100).toFixed(1);
+    
+    return `Based on the image analysis, I've identified this as likely ${displayName} with ${confidencePercentage}% confidence. ${description}\n\nFor proper vector control measures, please consult with pest control professionals or health authorities.`;
+}
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setError(null);
-      setPrediction(null);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+export default function VectorClassifier() {
+    const [predictionPopup, setPredictionPopup] = useState(false);
+    const [reviewPopup, setReviewPopup] = useState(false);
+    const [changePredictionPopup, setChangePredictionPopup] = useState(false);
+    const [imageURL, setImageURL] = useState<undefined | string>(undefined);
+    const [image, setImage] = useState<undefined | File>(undefined);
+    const [absoluteImageURL, setAbsoluteImageURL] = useState("");
+    const [predictedResults, setPredictedResults] = useState({
+        className: "...",
+        date: "...",
+    });
+    const [userQuestion, setUserQuestion] = useState("");
+    const [isPredicting, setIsPredicting] = useState(false);
+    const [aiResponse, setAiResponse] = useState("...");
+    const [changingPrediction, setChangingPrediction] = useState(false);
+    const [selectedChoice, setSelectedChoice] = useState("");
+    const [userComment, setUserComment] = useState("");
+    const [regularFilename, setRegularFilename] = useState("");
+    const [simulationMode, setSimulationMode] = useState(true);
+
+    const { uploadFile, isUploading } = useFileUpload();
+
+    async function handleAskQuestion() {
+        const prediction = predictedResults.className.trim();
+        const question = userQuestion.trim();
+
+        if (!prediction || !question) {
+            alert("Prediction or question fields are empty");
+            return;
+        }
+
+        if (simulationMode && prediction !== "...") {
+            const responses = {
+                "what is this": "This is a disease-carrying vector identified through image analysis.",
+                "is it dangerous": "Many vectors can transmit diseases to humans. Prevention and control measures are recommended.",
+                "how to control": "Vector control involves eliminating breeding sites, using insecticides, and maintaining cleanliness.",
+                "prevention": "Prevention includes using protective clothing, insect repellents, and bed nets."
+            };
+
+            const lowerQuestion = question.toLowerCase();
+            let response = "Thank you for your question about this vector. ";
+
+            for (const [key, value] of Object.entries(responses)) {
+                if (lowerQuestion.includes(key.split(' ')[0])) {
+                    response += value;
+                    break;
+                }
+            }
+
+            if (response === "Thank you for your question about this vector. ") {
+                response += "For specific control and prevention measures, please consult with pest control professionals.";
+            }
+
+            setAiResponse(response);
+            return;
+        }
+
+        try {
+            const result = await fetch("/api/askgpt", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prediction, question, absoluteImageURL }),
+            });
+            const returnText = await result.text();
+            setAiResponse(returnText);
+        } catch (error) {
+            console.error(error);
+        }
     }
-  };
 
-  const handlePredict = async () => {
-    if (!selectedFile) {
-      setError("Please select an image first");
-      return;
+    async function commentOnImage(comment: string, imagePath: string, classification: string, changedClassification: string) {
+        try {
+            const result = await fetch("/api/comments", {
+                method: "POST",
+                body: JSON.stringify({ comment, imagePath, classification, changedClassification }),
+            });
+            return JSON.parse(await result.text());
+        } catch (error) {
+            console.error(error);
+        }
     }
 
-    setLoading(true);
-    setError(null);
+    async function startPrediction() {
+        try {
+            if (image) {
+                setIsPredicting(true);
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
+                if (simulationMode) {
+                    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
 
-    try {
-      const response = await fetch("http://localhost:8000/predict", {
-        method: "POST",
-        body: formData,
-      });
+                    const simulatedPrediction = simulateVectorPrediction();
+                    const explanation = generateExplanation(simulatedPrediction);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+                    setPredictedResults({
+                        className: simulatedPrediction.max_prob < 0.65 ? "not-identified" : simulatedPrediction.displayName,
+                        date: new Date().toDateString(),
+                    });
 
-      const data: PredictionResult = await response.json();
-      setPrediction(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to classify image");
-      console.error("Prediction error:", err);
-    } finally {
-      setLoading(false);
+                    setAiResponse(explanation);
+                    setRegularFilename("simulated_image.jpg");
+                    setAbsoluteImageURL(imageURL || "");
+
+                    setImage(undefined);
+                    setPredictionPopup(false);
+                    setIsPredicting(false);
+                    setReviewPopup(true);
+                    return;
+                }
+
+                const result = await uploadFile(image);
+                const fileName = result.split("/uploads/")[1];
+
+                const prediction = await fetch("/api/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileName }),
+                });
+
+                setRegularFilename(fileName);
+                setAbsoluteImageURL(`${DOMAIN}/uploads/${fileName}`);
+
+                const predictionResults = JSON.parse(await prediction.text()).classification;
+
+                if (predictionResults) {
+                    const accuracy = predictionResults.max_prob;
+                    setPredictedResults({
+                        className: accuracy < 0.65 ? "not-identified" : predictionResults.predicted_class,
+                        date: new Date().toDateString(),
+                    });
+                }
+
+                setImage(undefined);
+                setPredictionPopup(false);
+                setIsPredicting(false);
+                setReviewPopup(true);
+            }
+        } catch (error) {
+            console.error(error);
+            setIsPredicting(false);
+        }
     }
-  };
 
-  const formatClassName = (className: string) => {
-    return className.replace(/_/g, " ");
-  };
+    function handlePredictingImageChange(event: ChangeEvent<HTMLInputElement>) {
+        try {
+            if (event.target.files) {
+                const file = event.target.files[0];
+                setImage(file);
+                const url = URL.createObjectURL(file);
+                setImageURL(url);
+            }
+        } catch (error) {
+            setImageURL(undefined);
+            setImage(undefined);
+            console.error(error);
+        }
+    }
 
-  return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          Parasite Classification
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Upload an image to identify parasites and insects
-        </p>
+    async function confirmPredictionChanges() {
+        setChangingPrediction(true);
+        setPredictedResults({ ...predictedResults, className: selectedChoice });
 
-        {/* File Upload */}
-        <div className="mb-6">
-          <label className="block mb-2 text-sm font-medium text-gray-700">
-            Select Image
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-          />
+        if (simulationMode) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setChangePredictionPopup(false);
+            setChangingPrediction(false);
+            return;
+        }
+
+        await fetch(`api/reference/`, {
+            method: "POST",
+            body: JSON.stringify({ fileName: regularFilename, folderName: selectedChoice })
+        });
+
+        await commentOnImage(userComment, regularFilename, predictedResults.className, selectedChoice);
+
+        setChangePredictionPopup(false);
+        setChangingPrediction(false);
+    }
+
+    return (
+        <div style={{ padding: "20px" }}>
+            <h1 style={{ textAlign: "center", color: "#780000", fontSize: "40px", fontWeight: 700 }}>
+                Vector Classification
+            </h1>
+            <h2 style={{ textAlign: "center", color: "#010101", fontSize: "24px", fontWeight: 400, marginBottom: "30px" }}>
+                Upload an image to identify disease-carrying vectors
+            </h2>
+
+            <div className="predict-button-container" onClick={() => setPredictionPopup(true)}>
+                <div className="button">Upload Image for Classification</div>
+            </div>
+
+            {predictionPopup && (
+                <Popup
+                    title="Upload Image for Classification"
+                    onClose={() => {
+                        setPredictionPopup(false);
+                        setImageURL(undefined);
+                        setImage(undefined);
+                    }}
+                >
+                    <PopupBody>
+                        <div className="popup-body predict-body">
+                            <div className="image-upload-wrapper" onClick={() => document.getElementById('file-input')?.click()}>
+                                {!imageURL && <div className="select-image">Click to select an image</div>}
+                                {imageURL && <img src={imageURL} alt="Preview" />}
+                            </div>
+                            <input
+                                id="file-input"
+                                type="file"
+                                accept="image/*"
+                                onChange={handlePredictingImageChange}
+                                style={{ display: 'none' }}
+                            />
+                            {image && (
+                                <button className="button" onClick={startPrediction} disabled={isPredicting}>
+                                    {isPredicting ? "Classifying..." : "Start Classification"}
+                                </button>
+                            )}
+                        </div>
+                        {isPredicting && <Loader />}
+                    </PopupBody>
+                </Popup>
+            )}
+
+            {reviewPopup && (
+                <Popup
+                    title="Classification Results"
+                    onClose={() => {
+                        setReviewPopup(false);
+                        setImageURL(undefined);
+                    }}
+                >
+                    <PopupBody size={{ width: "70vw", height: "auto" }}>
+                        <div className="prediction-view-body">
+                            <div className="image-view-wrapper">
+                                {!imageURL && <Loader />}
+                                {imageURL && <img className="image-review-view" alt="Classified vector" src={imageURL} />}
+                                <div className="gpt-ask-container">
+                                    <input
+                                        type="text"
+                                        placeholder="Ask about the classification..."
+                                        onChange={(e) => setUserQuestion(e.target.value)}
+                                    />
+                                    <button type="button" onClick={handleAskQuestion}>Ask AI</button>
+                                </div>
+                            </div>
+
+                            <div className="image-view-details-wrapper">
+                                <div className="stretch-container simple-grid">
+                                    <div className="simple-grid">
+                                        <p className="subheading">Classification Result</p>
+                                        <p className="stand-out">{predictedResults.className}</p>
+                                    </div>
+                                    <div className="button change-prediction-button" onClick={() => setChangePredictionPopup(true)}>
+                                        Change Classification
+                                    </div>
+                                </div>
+
+                                <div className="stretch-container">
+                                    <div className="simple-grid">
+                                        <p className="subheading">Classification Date</p>
+                                        <p className="stand-out">{predictedResults.date}</p>
+                                    </div>
+                                </div>
+
+                                <div className="stretch-container">
+                                    <div className="simple-grid">
+                                        <p className="subheading">AI Explanation</p>
+                                        <p className="stand-out" style={{ fontSize: "10px" }}>{aiResponse}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </PopupBody>
+                </Popup>
+            )}
+
+            {changePredictionPopup && (
+                <Popup title="Change Classification" onClose={() => setChangePredictionPopup(false)}>
+                    <PopupBody>
+                        <div className="popup-body change-prediction-body">
+                            <div className="current-predition-container">
+                                <p className="mini-title">Current Classification:</p>
+                                <p className="current-prediction-placeholder">{predictedResults.className}</p>
+                            </div>
+
+                            <div className="change-to-container">
+                                <p className="mini-title">Change to:</p>
+                                <div className="change-to-options">
+                                    {availableChoices
+                                        .filter((option) => option !== predictedResults.className)
+                                        .map((choice, index) => (
+                                            <label key={index} className="change-option">
+                                                <input type="radio" name="radio" required onChange={() => setSelectedChoice(choice)} />
+                                                {choice.replace(/_/g, ' ')}
+                                            </label>
+                                        ))}
+                                </div>
+                            </div>
+
+                            <div className="comment-container">
+                                <p className="mini-title">Comment (Optional):</p>
+                                <input className="comment" onChange={(e) => setUserComment(e.target.value)} />
+                            </div>
+                            <p className="disclaimer">
+                                The classification will be updated to the new choice. The image will be used to improve future versions of the model.
+                            </p>
+
+                            <button className="button" type="button" onClick={confirmPredictionChanges}>
+                                Confirm Changes
+                            </button>
+                        </div>
+                        {changingPrediction && <Loader />}
+                    </PopupBody>
+                </Popup>
+            )}
         </div>
-
-        {/* Image Preview */}
-        {preview && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Image Preview</h3>
-            <div className="relative w-full h-64 bg-gray-100 rounded-lg overflow-hidden">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Predict Button */}
-        <button
-          onClick={handlePredict}
-          disabled={!selectedFile || loading}
-          className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-        >
-          {loading ? "Classifying..." : "Classify Image"}
-        </button>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Prediction Results */}
-      {prediction && (
-        <div className="bg-white rounded-lg shadow-lg p-6 space-y-6">
-          <h2 className="text-2xl font-bold text-gray-800">Results</h2>
-
-          {/* Main Prediction */}
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-700 font-medium">
-                  Predicted Class
-                </p>
-                <p className="text-2xl font-bold text-green-900">
-                  {formatClassName(prediction.predicted_class)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-green-700 font-medium">Confidence</p>
-                <p className="text-2xl font-bold text-green-900">
-                  {(prediction.confidence * 100).toFixed(1)}%
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* All Probabilities */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">
-              All Class Probabilities
-            </h3>
-            <div className="space-y-3">
-              {Object.entries(prediction.all_probabilities)
-                .sort((a, b) => b[1] - a[1])
-                .map(([className, probability]) => (
-                  <div key={className} className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium text-gray-700">
-                        {formatClassName(className)}
-                      </span>
-                      <span className="text-gray-600">
-                        {(probability * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${probability * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    );
 }

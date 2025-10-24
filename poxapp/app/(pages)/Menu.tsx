@@ -24,11 +24,11 @@ function Menu() {
                             height={40}
                         />
                     </div>
-                    <div className="text">Dashboard</div>
+                    <div className="text">Home</div>
                 </div>
             </Link>
 
-            <Link href="/predict">
+            <Link href="/classify">
                 <div className="navigation-item">
                     <div className="image">
                         <Image
@@ -38,7 +38,7 @@ function Menu() {
                             height={40}
                         />
                     </div>
-                    <div className="text">Predict</div>
+                    <div className="text">Classify</div>
                 </div>
             </Link>
 
@@ -83,7 +83,7 @@ function Menu() {
                 </div>
             </Link>
 
-            <Link href="/logout">
+            <Link href="/">
                 <div className="navigation-item">
                     <div className="image">
                         <Image

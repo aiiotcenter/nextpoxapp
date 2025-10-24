@@ -1,73 +1,92 @@
-.change-prediction-overlay{
-
+.change-prediction-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: grid;
+    place-items: center;
 }
 
 .change-prediction-loader {
     display: none;
 }
 
-.change-prediction-popup{
+.change-prediction-popup {
     max-width: 600px;
+    width: 90%;
 }
 
-.change-prediction-body{
+.change-prediction-body {
     display: grid;
     grid-template-rows: auto auto 1fr auto auto;
     align-items: start;
-    grid-gap: 10px;
+    grid-gap: 20px;
     height: 100%;
     position: relative;
     max-width: 600px;
 }
 
-.current-predition-container{
+.current-predition-container {
     display: grid;
     grid-template-columns: auto 1fr;
-    grid-gap: 5px;
+    grid-gap: 10px;
+    align-items: center;
+}
+
+.current-prediction-placeholder {
+    font-weight: 600;
+    color: var(--accent);
 }
 
 .change-to-container {
     display: grid;
-    grid-gap: 10px;
+    grid-gap: 15px;
 }
 
-.mini-title{
+.mini-title {
     color: var(--accent);
     font-weight: 600;
+    font-size: 0.9em;
 }
 
-.change-to-options{
+.change-to-options {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, auto));
-    grid-gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-gap: 15px;
 }
 
-.change-option{
-    border: 2px solid gray;
-    border-radius: 5px;
-    padding: 5px 10px;
+.change-option {
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    padding: 12px 15px;
     text-align: center;
     cursor: pointer;
-    text-transform: uppercase;
+    text-transform: capitalize;
     font-size: 13px;
-    letter-spacing: 2px;
+    letter-spacing: 0.5px;
     pointer-events: all;
     display: grid;
     grid-template-columns: auto 1fr;
-    /* grid-gap: 10px; */
+    grid-gap: 10px;
     align-items: center;
+    transition: 0.3s all;
+    background: white;
 }
 
 .change-option input {
-    /* opacity: 0; */
     cursor: pointer;
-    /* height: 100%;
-    width: 100%; */
-  }
+    width: 16px;
+    height: 16px;
+}
 
-.change-option:hover, .change-option:active {
+.change-option:hover,
+.change-option:active {
     border-color: var(--accent);
     color: var(--accent);
+    background: rgba(120, 0, 0, 0.05);
 }
 
 .change-option:has(input:checked) {
@@ -76,7 +95,7 @@
     background-color: var(--accent);
 }
 
-.comment-container{
+.comment-container {
     height: 100%;
     display: grid;
     grid-template-rows: auto 1fr;
@@ -85,14 +104,84 @@
     position: relative;
 }
 
-.comment{
+.comment {
     border: 2px solid var(--accent);
     padding: 13px;
     border-radius: 5px;
     outline: none;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+    transition: 0.3s all;
 }
 
-.disclaimer{
-    font-size: 13px;
-    color: gray;
+.comment:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(120, 0, 0, 0.1);
+}
+
+.disclaimer {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.5;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 5px;
+}
+
+/* Responsive Design */
+@media only screen and (max-width: 768px) {
+    .change-prediction-popup {
+        width: 95%;
+        max-width: 100%;
+    }
+
+    .change-prediction-body {
+        grid-gap: 15px;
+    }
+
+    .change-to-options {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        grid-gap: 10px;
+    }
+
+    .change-option {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    .comment {
+        min-height: 60px;
+        padding: 10px;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .change-prediction-body {
+        grid-gap: 12px;
+    }
+
+    .current-predition-container {
+        grid-template-columns: 1fr;
+        grid-gap: 5px;
+    }
+
+    .change-to-options {
+        grid-template-columns: 1fr;
+        grid-gap: 8px;
+    }
+
+    .change-option {
+        padding: 10px;
+        font-size: 11px;
+    }
+
+    .mini-title {
+        font-size: 0.85em;
+    }
+
+    .disclaimer {
+        font-size: 11px;
+        padding: 8px;
+    }
 }
