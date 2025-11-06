@@ -1,9 +1,0 @@
-pillow
-flask
-flask_cors
-scikit-image
-scikit-learn
-joblib
-tensorflow
-fastapi
-uvicorn

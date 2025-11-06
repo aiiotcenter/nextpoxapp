@@ -7,7 +7,8 @@ import "@/app/styles/changePrediction.css";
 import useFileUpload from "@/app/hooks/useFileUpload";
 import Loader from "@/app/components/Loader/Loader";
 
-const DOMAIN = "http://mpoxapp.aiiot.center";
+const DOMAIN = "http://mpoxapp.aiiot.center";  
+const BACKEND_URL = "http://localhost:5000";   // flask backend URL
 
 const availableChoices = [
     "Cimex_Lectularius",
@@ -51,6 +52,15 @@ const vectorData = {
     }
 };
 
+const vectorToInsectType: Record<string, string> = {
+    "Aedes": "aedes",
+    "Culex_sp": "culex",
+    "Cimex_Lectularius": "bedbug",
+    "Ixodes_ricinus": "tick",
+    "Ctenocephalides_felis": "flea",
+    "Pediculus_humanus_capitis": "anopheles" // Map to closest available
+};
+
 function simulateVectorPrediction() {
     const vectors = Object.keys(vectorData) as (keyof typeof vectorData)[];
     const randomVector = vectors[Math.floor(Math.random() * vectors.length)];
@@ -86,6 +96,7 @@ export default function VectorClassifier() {
         className: "...",
         date: "...",
     });
+    const [selectedInsectType, setSelectedInsectType] = useState("aedes");
     const [userQuestion, setUserQuestion] = useState("");
     const [isPredicting, setIsPredicting] = useState(false);
     const [aiResponse, setAiResponse] = useState("...");
@@ -93,7 +104,7 @@ export default function VectorClassifier() {
     const [selectedChoice, setSelectedChoice] = useState("");
     const [userComment, setUserComment] = useState("");
     const [regularFilename, setRegularFilename] = useState("");
-    const [simulationMode, setSimulationMode] = useState(true);
+    const [simulationMode, setSimulationMode] = useState(false);
 
     const { uploadFile, isUploading } = useFileUpload();
 
@@ -164,19 +175,15 @@ export default function VectorClassifier() {
 
                 if (simulationMode) {
                     await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
-
                     const simulatedPrediction = simulateVectorPrediction();
                     const explanation = generateExplanation(simulatedPrediction);
-
                     setPredictedResults({
                         className: simulatedPrediction.max_prob < 0.65 ? "not-identified" : simulatedPrediction.displayName,
                         date: new Date().toDateString(),
                     });
-
                     setAiResponse(explanation);
                     setRegularFilename("simulated_image.jpg");
                     setAbsoluteImageURL(imageURL || "");
-
                     setImage(undefined);
                     setPredictionPopup(false);
                     setIsPredicting(false);
@@ -184,27 +191,51 @@ export default function VectorClassifier() {
                     return;
                 }
 
-                const result = await uploadFile(image);
-                const fileName = result.split("/uploads/")[1];
-
-                const prediction = await fetch("/api/predict", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ fileName }),
-                });
-
+                // Real prediction - upload file first
+                const uploadResult = await uploadFile(image);
+                const fileName = uploadResult.split("/uploads/")[1];
                 setRegularFilename(fileName);
                 setAbsoluteImageURL(`${DOMAIN}/uploads/${fileName}`);
 
-                const predictionResults = JSON.parse(await prediction.text()).classification;
+                // Prepare form data for Flask backend
+                const formData = new FormData();
+                formData.append('image', image);
+                formData.append('insect_type', 'aedes');
 
-                if (predictionResults) {
-                    const accuracy = predictionResults.max_prob;
-                    setPredictedResults({
-                        className: accuracy < 0.65 ? "not-identified" : predictionResults.predicted_class,
-                        date: new Date().toDateString(),
-                    });
+                // Call Flask backend
+                const response = await fetch(`${BACKEND_URL}/api/predict`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const predictionData = await response.json();
+
+                if (!predictionData.success) {
+                    alert(`Prediction failed: ${predictionData.error}`);
+                    setIsPredicting(false);
+                    return;
                 }
+
+                // Process results
+                const predictionResult = predictionData.result;
+                const isPositive = predictionResult.predicted_class === 'aedes';
+                const confidence = predictionResult.confidence;
+
+                setPredictedResults({
+                    className: confidence < 0.65 ? "not-identified" : (isPositive ? "Aedes" : "Not Aedes"),
+                    date: new Date().toDateString(),
+                });
+
+                let explanation;
+                if (confidence < 0.65) {
+                    explanation = `Unable to confidently identify this image. The model's confidence (${(confidence * 100).toFixed(1)}%) is below the threshold. Please try uploading a clearer image with better lighting and focus on the insect.`;
+                } else if (isPositive) {
+                    explanation = `Identified as Aedes mosquito with ${(confidence * 100).toFixed(1)}% confidence. ${vectorData.Aedes.description}`;
+                } else {
+                    explanation = `This does not appear to be an Aedes mosquito (${(confidence * 100).toFixed(1)}% confidence that it's NOT Aedes). The image shows a different species or object.`;
+                }
+                
+                setAiResponse(explanation);
 
                 setImage(undefined);
                 setPredictionPopup(false);
@@ -212,7 +243,8 @@ export default function VectorClassifier() {
                 setReviewPopup(true);
             }
         } catch (error) {
-            console.error(error);
+            console.error('Prediction error:', error);
+            alert('Classification failed. Make sure the backend is running.');
             setIsPredicting(false);
         }
     }
@@ -278,6 +310,21 @@ export default function VectorClassifier() {
                 >
                     <PopupBody>
                         <div className="popup-body predict-body">
+                            <div style={{marginBottom: '16px'}}>
+                                <label style={{display: 'block', marginBottom: '8px', backgroundColor: '#980000', color: '#fbfbfb', padding: '4px 8px', borderRadius: '4px'}}>
+                                    Select Vector Type From Menu:
+                                </label>
+                                <select 
+                                    onChange={(e) => setSelectedInsectType(e.target.value)}
+                                    defaultValue="aedes"
+                                    style={{width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
+                                >
+                                    <option value="aedes">Aedes Mosquito</option>
+                                    <option value="culex" disabled>Culex (Coming Soon)</option>
+                                    <option value="bedbug" disabled>Bed Bug (Coming Soon)</option>
+                                    {/* Add others as they become available */}
+                                </select>
+                            </div>
                             <div className="image-upload-wrapper" onClick={() => document.getElementById('file-input')?.click()}>
                                 {!imageURL && <div className="select-image">Click to select an image</div>}
                                 {imageURL && <img src={imageURL} alt="Preview" />}

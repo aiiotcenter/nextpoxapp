@@ -77,9 +77,8 @@ export default function Home() {
                     )}
                 </div>
 
-                <div className="logo-container flex">
-                    <img src="/assets/logos/rcaiot-logo.png" alt="RCAIOT Logo" />
-                    <img src="/assets/logos/air-logo.png" alt="AIR Logo" />
+                <div className="logo-container flex items-center justify-center">
+                    <img src="/assets/logos/rcaiot-logo.png" alt="RCAIOT Logo" className="w-96 h-40"/>
                 </div>
             </div>
         </div>

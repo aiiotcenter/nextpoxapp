@@ -1,8 +1,15 @@
-uploads/*.jpg
-uploads/*.png
-uploads/*.jpeg
-uploads/*.webp
+# Environment variables (contains API key)
+.env.local
+.env
 
-uploads/*/
+# Python virtual environment
+VectorBackend/fresh_venv/
+VectorBackend/__pycache__/
+VectorBackend/*.pyc
 
-models/*.keras
+# Model files (too large for GitHub)
+VectorBackend/models/
+
+# Uploads folder
+uploads/
+public/uploads/
