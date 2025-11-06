@@ -111,48 +111,32 @@ export default function VectorClassifier() {
     async function handleAskQuestion() {
         const prediction = predictedResults.className.trim();
         const question = userQuestion.trim();
-
+        
         if (!prediction || !question) {
             alert("Prediction or question fields are empty");
             return;
         }
-
-        if (simulationMode && prediction !== "...") {
-            const responses = {
-                "what is this": "This is a disease-carrying vector identified through image analysis.",
-                "is it dangerous": "Many vectors can transmit diseases to humans. Prevention and control measures are recommended.",
-                "how to control": "Vector control involves eliminating breeding sites, using insecticides, and maintaining cleanliness.",
-                "prevention": "Prevention includes using protective clothing, insect repellents, and bed nets."
-            };
-
-            const lowerQuestion = question.toLowerCase();
-            let response = "Thank you for your question about this vector. ";
-
-            for (const [key, value] of Object.entries(responses)) {
-                if (lowerQuestion.includes(key.split(' ')[0])) {
-                    response += value;
-                    break;
-                }
-            }
-
-            if (response === "Thank you for your question about this vector. ") {
-                response += "For specific control and prevention measures, please consult with pest control professionals.";
-            }
-
-            setAiResponse(response);
+    
+        if (prediction === "...") {
+            alert("Please classify an image first");
             return;
         }
-
+    
+        // Remove simulation mode check - always use real API
         try {
+            setAiResponse("Thinking...");
+            
             const result = await fetch("/api/askgpt", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prediction, question, absoluteImageURL }),
+                body: JSON.stringify({ prediction, question }),
             });
-            const returnText = await result.text();
-            setAiResponse(returnText);
+            
+            const data = await result.json();
+            setAiResponse(data.answer || "No response received.");
         } catch (error) {
             console.error(error);
+            setAiResponse("Failed to get AI response. Please try again.");
         }
     }
 

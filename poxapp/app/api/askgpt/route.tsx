@@ -1,60 +1,58 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-    const body = await request.json();
-
     try {
-        if (body) {
-            const { prediction, question, absoluteImageURL } = body;
-            const result = await askChatGPT(
-                prediction,
-                question,
-                absoluteImageURL
-            );
-            return new NextResponse(result, { status: 200 });
-        }
-    } catch (error) {
-        return NextResponse.json(error, { status: 200 });
-    }
-}
+        const { prediction, question } = await request.json();
 
-async function askChatGPT(__prediction: string, __question: string, absoluteImageURL: string) {
-    const prediction = __prediction.trim();
-    const question = __question.trim();
-
-    const OPENAI_KEY = process.env.OPENAI_KEY;
-    console.log("OPENAI_KEY: ", OPENAI_KEY);
-
-    const prompt = `The prediction is "${prediction}", The image is from ${absoluteImageURL}. ${question}`;
-
-    console.log("prompt: ", prompt);
-
-    if (!OPENAI_KEY) {
-        alert("OPEN AI KEY DOES NOT ESIT");
-        return;
-    }
-
-    try {
-        const response = await fetch(
-            "https://api.openai.com/v1/chat/completions",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${OPENAI_KEY}`,
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o",
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 100,
-                }),
-            }
-        );
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a helpful assistant specializing in disease vector identification and public health. Provide accurate, concise information about vectors like mosquitoes, ticks, fleas, and bed bugs.'
+                    },
+                    {
+                        role: 'user',
+                        content: `The classification result is: ${prediction}. User question: ${question}`
+                    }
+                ],
+                max_tokens: 200,
+                temperature: 0.7
+            })
+        });
 
         const data = await response.json();
-        return data.choices[0].message.content.trim();
+
+        // Log the full response to see what's wrong
+        console.log('OpenAI Response:', data);
+            
+        if (data.error) {
+            console.error('OpenAI Error:', data.error);
+            return NextResponse.json({ 
+                answer: `OpenAI API Error: ${data.error.message}` 
+            }, { status: 500 });
+        }
+        
+        if (!data.choices || data.choices.length === 0) {
+            return NextResponse.json({ 
+                answer: 'No response received from OpenAI.' 
+            }, { status: 500 });
+        }
+        
+        return NextResponse.json({ 
+            answer: data.choices[0].message.content 
+        });
+
     } catch (error) {
-        console.error(error);
-        return new Error("GPT Failed To Respond");
+        console.error('AI error:', error);
+        return NextResponse.json({ 
+            answer: 'Sorry, I could not process your question at this time.' 
+        }, { status: 500 });
     }
 }

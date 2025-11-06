@@ -69,7 +69,7 @@ function Menu() {
                 </div>
             </Link> */}
 
-            <Link href="/collaborators">
+            {/* <Link href="/collaborators">
                 <div className="navigation-item">
                     <div className="image">
                         <Image
@@ -81,7 +81,7 @@ function Menu() {
                     </div>
                     <div className="text">Collaborators</div>
                 </div>
-            </Link>
+            </Link> */}
 
             <Link href="/">
                 <div className="navigation-item">
