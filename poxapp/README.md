@@ -41,10 +41,16 @@ cd VectorBackend
 
 ### 2. Download Model Weights
 
-Download the Aedes model from [Google Drive](https://drive.google.com/file/d/18SqlpIT5XY8FUC4tou3y1MTuDlM7BJ7p/view?usp=sharing) and place it at:
+Download the Aedes model by reaching out to wisdomlotachukwu@gmail.com for the link and place it at:
 
 ```
 VectorBackend/models/aedes/best_model_20251020_185558.pth
+```
+
+Download the Culex model by reaching out to wisdomlotachukwu@gmail.com for the link and place it at:
+
+```
+VectorBackend/models/culex/best_model_20251020_185558.pth
 ```
 
 ### 3. Backend Setup
@@ -114,8 +120,8 @@ To enable the "Ask AI" feature:
 
 ## Current Limitations
 
-- Only **Aedes mosquito** model is currently available
-- Other vectors (Culex, Anopheles, Bed Bug, Flea, Tick) coming soon
+- Only **Aedes mosquito** and **Culex Mosquito** model is currently available
+- Other vectors (Anopheles, Bed Bug, Flea, Tick) coming soon
 - Backend runs locally only (not deployed)
 
 ---

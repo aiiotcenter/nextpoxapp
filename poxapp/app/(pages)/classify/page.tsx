@@ -8,7 +8,7 @@ import useFileUpload from "@/app/hooks/useFileUpload";
 import Loader from "@/app/components/Loader/Loader";
 
 const DOMAIN = "http://mpoxapp.aiiot.center";  
-const BACKEND_URL = "http://localhost:5000";   // flask backend URL
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";   // flask backend URL
 
 const availableChoices = [
     "Cimex_Lectularius",
@@ -52,14 +52,20 @@ const vectorData = {
     }
 };
 
-const vectorToInsectType: Record<string, string> = {
-    "Aedes": "aedes",
-    "Culex_sp": "culex",
-    "Cimex_Lectularius": "bedbug",
-    "Ixodes_ricinus": "tick",
-    "Ctenocephalides_felis": "flea",
-    "Pediculus_humanus_capitis": "anopheles" // Map to closest available
-};
+interface PredictionData {
+    displayName: string;
+    description: string;
+    max_prob: number;
+}
+
+// const vectorToInsectType: Record<string, string> = {
+//     "Aedes": "aedes",
+//     "Culex_sp": "culex",
+//     "Cimex_Lectularius": "bedbug",
+//     "Ixodes_ricinus": "tick",
+//     "Ctenocephalides_felis": "flea",
+//     "Pediculus_humanus_capitis": "anopheles" // Map to closest available
+// };
 
 function simulateVectorPrediction() {
     const vectors = Object.keys(vectorData) as (keyof typeof vectorData)[];
@@ -78,7 +84,7 @@ function simulateVectorPrediction() {
     };
 }
 
-function generateExplanation(prediction: any) {
+function generateExplanation(prediction: PredictionData) {
     const { displayName, description, max_prob } = prediction;
     const confidencePercentage = (max_prob * 100).toFixed(1);
     
@@ -91,7 +97,7 @@ export default function VectorClassifier() {
     const [changePredictionPopup, setChangePredictionPopup] = useState(false);
     const [imageURL, setImageURL] = useState<undefined | string>(undefined);
     const [image, setImage] = useState<undefined | File>(undefined);
-    const [absoluteImageURL, setAbsoluteImageURL] = useState("");
+    const [, setAbsoluteImageURL] = useState("");
     const [predictedResults, setPredictedResults] = useState({
         className: "...",
         date: "...",
@@ -104,9 +110,9 @@ export default function VectorClassifier() {
     const [selectedChoice, setSelectedChoice] = useState("");
     const [userComment, setUserComment] = useState("");
     const [regularFilename, setRegularFilename] = useState("");
-    const [simulationMode, setSimulationMode] = useState(false);
+    const [simulationMode,] = useState(false);
 
-    const { uploadFile, isUploading } = useFileUpload();
+    const { uploadFile } = useFileUpload();
 
     async function handleAskQuestion() {
         const prediction = predictedResults.className.trim();
@@ -153,9 +159,13 @@ export default function VectorClassifier() {
     }
 
     async function startPrediction() {
+
         try {
             if (image) {
                 setIsPredicting(true);
+
+                const vectorName = selectedInsectType === 'aedes' ? 'Aedes' : 'Culex_sp';
+                const vectorInfo = vectorData[vectorName as keyof typeof vectorData];
 
                 if (simulationMode) {
                     await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
@@ -184,7 +194,7 @@ export default function VectorClassifier() {
                 // Prepare form data for Flask backend
                 const formData = new FormData();
                 formData.append('image', image);
-                formData.append('insect_type', 'aedes');
+                formData.append('insect_type', selectedInsectType);
 
                 // Call Flask backend
                 const response = await fetch(`${BACKEND_URL}/api/predict`, {
@@ -202,21 +212,23 @@ export default function VectorClassifier() {
 
                 // Process results
                 const predictionResult = predictionData.result;
-                const isPositive = predictionResult.predicted_class === 'aedes';
+                const isPositive = predictionResult.predicted_class === selectedInsectType;
                 const confidence = predictionResult.confidence;
 
                 setPredictedResults({
-                    className: confidence < 0.65 ? "not-identified" : (isPositive ? "Aedes" : "Not Aedes"),
+                    className: confidence < 0.65 ? "not-identified" : (isPositive ? vectorInfo.displayName : `NOT ${vectorInfo.displayName}`),
                     date: new Date().toDateString(),
                 });
 
                 let explanation;
+                
+
                 if (confidence < 0.65) {
                     explanation = `Unable to confidently identify this image. The model's confidence (${(confidence * 100).toFixed(1)}%) is below the threshold. Please try uploading a clearer image with better lighting and focus on the insect.`;
                 } else if (isPositive) {
-                    explanation = `Identified as Aedes mosquito with ${(confidence * 100).toFixed(1)}% confidence. ${vectorData.Aedes.description}`;
+                    explanation = `Identified as ${vectorInfo.displayName} with ${(confidence * 100).toFixed(1)}% confidence. ${vectorInfo.description}`;
                 } else {
-                    explanation = `This does not appear to be an Aedes mosquito (${(confidence * 100).toFixed(1)}% confidence that it's NOT Aedes). The image shows a different species or object.`;
+                    explanation = `This does not appear to be ${vectorInfo.displayName} (${(confidence * 100).toFixed(1)}% confidence that it's NOT ${selectedInsectType}). The image shows a different species or object.`;
                 }
                 
                 setAiResponse(explanation);
@@ -304,7 +316,7 @@ export default function VectorClassifier() {
                                     style={{width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
                                 >
                                     <option value="aedes">Aedes Mosquito</option>
-                                    <option value="culex" disabled>Culex (Coming Soon)</option>
+                                    <option value="culex">Culex Mosquito</option>
                                     <option value="bedbug" disabled>Bed Bug (Coming Soon)</option>
                                     {/* Add others as they become available */}
                                 </select>
@@ -360,9 +372,9 @@ export default function VectorClassifier() {
                                         <p className="subheading">Classification Result</p>
                                         <p className="stand-out">{predictedResults.className}</p>
                                     </div>
-                                    <div className="button change-prediction-button" onClick={() => setChangePredictionPopup(true)}>
+                                    {/* <div className="button change-prediction-button" onClick={() => setChangePredictionPopup(true)}>
                                         Change Classification
-                                    </div>
+                                    </div> */}
                                 </div>
 
                                 <div className="stretch-container">

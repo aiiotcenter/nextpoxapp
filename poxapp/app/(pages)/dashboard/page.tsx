@@ -138,7 +138,9 @@ const vectorData = {
 };
 
 export default function Dashboard() {
-    const [simulationMode, setSimulationMode] = useState(true);
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    const [simulationMode, _setSimulationMode] = useState(true);
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 
     return (
         <div style={{ padding: "20px" }}>

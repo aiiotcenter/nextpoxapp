@@ -20,6 +20,12 @@ const availableChoices = [
     "not-identified",
 ];
 
+interface PredictionData {
+    displayName: string;
+    description: string;
+    max_prob: number;
+}
+
 // Simulation data based on the disease classification table
 const diseaseSimulationData = {
     "Cimex_Lectularius": {
@@ -92,7 +98,7 @@ function simulateDiseasePrediction() {
 }
 
 // Function to generate human-friendly explanation
-function generateHumanExplanation(prediction: any) {
+function generateHumanExplanation(prediction: PredictionData) {
     const { displayName, description, max_prob } = prediction;
     const confidencePercentage = (max_prob * 100).toFixed(1);
     
