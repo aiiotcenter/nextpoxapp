@@ -373,15 +373,15 @@ h2 {
 }
 
 .image-view-details-wrapper {
-    padding: 30px;
+    padding: 16px;
     width: 100%;
     display: grid;
-    grid-gap: 20px;
+    grid-gap: 12px;
     align-content: start;
 }
 
 .image-view-details-wrapper > *:nth-child(2) {
-    margin-top: 40px;
+    margin-top: 20px;
     display: grid;
     align-items: start;
 }

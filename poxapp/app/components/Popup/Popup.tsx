@@ -24,7 +24,7 @@ export function Popup({
 }: PopupProps) {
     return (
         <div className="overlay">
-            <form className={`popup ${className} ${type}`} onSubmit={onSubmit}>
+            <form className={`popup ${className} ${type}`} onSubmit={onSubmit} onClick={(e) => e.stopPropagation()} >
                 <div className="popupHeader">
                     <h1 className="popupTitle">{title}</h1>
                     {closable && (
