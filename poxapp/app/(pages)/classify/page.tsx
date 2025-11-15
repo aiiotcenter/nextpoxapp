@@ -115,15 +115,18 @@ export default function VectorClassifier() {
 
             // Generate AI explanation
             const primaryPred = data.result.primary_prediction;
-            const confidence = (primaryPred.confidence * 100).toFixed(1);
-            
+            const isNonVector = primaryPred.vector_type === null;
+
             let explanation = "";
             if (data.result.warning) {
                 explanation = data.result.warning;
+            } else if (isNonVector) {
+                explanation = "No disease vector detected. The image does not clearly match any of the known vector types.";
             } else {
+                const confidence = (primaryPred.confidence * 100).toFixed(1);
                 explanation = `Based on multi-model analysis, this has been identified as ${vectorDisplayNames[primaryPred.vector_type]} with ${confidence}% confidence. ${primaryPred.description}\n\nThe image was analyzed by all 6 vector classification models simultaneously.`;
             }
-            
+
             setAiResponse(explanation);
 
             setImage(undefined);
@@ -251,8 +254,11 @@ export default function VectorClassifier() {
                                 <div className="stretch-container simple-grid">
                                     <div className="simple-grid">
                                         <p className="subheading">Primary Classification</p>
-                                        <p className="stand-out">
-                                            {vectorDisplayNames[predictionResult.primary_prediction.vector_type]}
+                                        <p className="stand-out" style={{fontSize: '24px', color: '#780000'}}>
+                                            {predictionResult.primary_prediction.vector_type === null
+                                                ? "N/A"
+                                                : `${predictionResult.primary_prediction.vector_type}`
+                                            }
                                         </p>
                                     </div>
                                 </div>
